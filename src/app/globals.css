@@ -1,26 +1,175 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-playfair);
+  --font-body:    var(--font-inter);
+  --font-mono:    var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ════════════════════════════════════════════════════════════
+   LIGHT MODE — Patrick Jane
+   White background, electric blue accents, clean precision
+   ════════════════════════════════════════════════════════════ */
+:root,
+html[data-theme="light"] {
+  --bg:            #ffffff;
+  --surface:       #f4f7ff;
+  --raised:        #e8eeff;
+  --overlay:       #dce6ff;
+
+  --text-primary:  #0a0f1e;
+  --text-dim:      #1e2d54;
+  --text-muted:    #4a5c88;
+  --text-ghost:    #9aadd4;
+
+  --accent:        #2d5be3;
+  --accent-mid:    #4d78ff;
+  --accent-bright: #6e96ff;
+
+  --gold:          #1a3db5;
+  --gold-dim:      #2d5be3;
+  --gold-deep:     #0f2580;
+
+  --border:          rgba(45,91,227,0.13);
+  --border-soft:     rgba(45,91,227,0.07);
+  --border-accent:   rgba(45,91,227,0.35);
+  --border-gold:     rgba(45,91,227,0.20);
+
+  --indent-shadow:
+    0 1px 3px rgba(45,91,227,0.08),
+    0 4px 16px rgba(45,91,227,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -1px 0 rgba(45,91,227,0.06);
+
+  --shadow-card:  0 2px 8px rgba(45,91,227,0.08), 0 8px 24px rgba(45,91,227,0.05);
+  --shadow-glow:  0 0 40px rgba(45,91,227,0.18);
+}
+
+/* ════════════════════════════════════════════════════════════
+   DARK MODE — Red John
+   Near-black, blood crimson accents, inset indents
+   ════════════════════════════════════════════════════════════ */
+html[data-theme="dark"] {
+  --bg:            #07060a;
+  --surface:       #0f0e14;
+  --raised:        #161420;
+  --overlay:       #1e1b2a;
+
+  --text-primary:  #f0ead8;
+  --text-dim:      #b8af9a;
+  --text-muted:    #6e6860;
+  --text-ghost:    #3a3530;
+
+  --accent:        #b91c1c;
+  --accent-mid:    #dc2626;
+  --accent-bright: #ef4444;
+
+  --gold:          #c9a84c;
+  --gold-dim:      #a8832a;
+  --gold-deep:     #6b5224;
+
+  --border:          rgba(185,28,28,0.18);
+  --border-soft:     rgba(185,28,28,0.09);
+  --border-accent:   rgba(185,28,28,0.40);
+  --border-gold:     rgba(168,131,42,0.22);
+
+  --indent-shadow:
+    inset 0 1px 0 rgba(255,100,100,0.06),
+    inset 0 -1px 0 rgba(0,0,0,0.55),
+    inset 1px 0 0 rgba(185,28,28,0.05),
+    0 8px 32px rgba(0,0,0,0.6);
+
+  --shadow-card:  0 4px 24px rgba(0,0,0,0.6);
+  --shadow-glow:  0 0 40px rgba(185,28,28,0.15);
+}
+
+/* ── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-body), system-ui, sans-serif;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display), Georgia, serif;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+html[data-theme="dark"] ::-webkit-scrollbar { width: 4px; }
+html[data-theme="dark"] ::-webkit-scrollbar-track  { background: var(--bg); }
+html[data-theme="dark"] ::-webkit-scrollbar-thumb  { background: #3a0a0a; border-radius: 2px; }
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #b91c1c; }
+
+/* ── Selection ──────────────────────────────────────────────── */
+html[data-theme="light"] ::selection { background: rgba(45,91,227,0.18); color: #0a0f1e; }
+html[data-theme="dark"]  ::selection { background: rgba(185,28,28,0.35); color: #f0ead8; }
+
+/* ── Cards ──────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--indent-shadow);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.card-raised {
+  background: var(--raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--indent-shadow);
+}
+.card-accent {
+  background: var(--surface);
+  border: 1px solid var(--border-accent);
+  border-radius: 12px;
+  box-shadow: var(--indent-shadow);
+}
+
+/* ── Divider ────────────────────────────────────────────────── */
+.divider-ornate {
+  display: flex; align-items: center; gap: 14px;
+  color: var(--text-muted);
+  font-family: var(--font-display), serif; font-size: 1.1rem;
+}
+.divider-ornate::before, .divider-ornate::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
+}
+
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes fadeUp  { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes breathe { 0%,100%{opacity:.5;transform:scale(1);} 50%{opacity:.9;transform:scale(1.06);} }
+@keyframes drift   { 0%{transform:translate(0,0) rotate(0deg);} 33%{transform:translate(30px,-20px) rotate(120deg);} 66%{transform:translate(-20px,30px) rotate(240deg);} 100%{transform:translate(0,0) rotate(360deg);} }
+@keyframes shimmer { 0%{background-position:-200% center;} 100%{background-position:200% center;} }
+@keyframes scan-line { 0%{top:0%;} 100%{top:100%;} }
+
+.animate-fade-up { animation: fadeUp  0.7s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-in { animation: fadeIn  0.4s ease both; }
+.animate-breathe { animation: breathe 4s ease-in-out infinite; }
+.animate-drift   { animation: drift  22s linear infinite; }
+.animate-scan    { animation: scan-line 3s linear infinite; }
+
+.shimmer {
+  background: linear-gradient(90deg, var(--raised) 0%, var(--overlay) 50%, var(--raised) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease infinite;
+}
+
+.delay-100 { animation-delay:.10s; }
+.delay-200 { animation-delay:.20s; }
+.delay-300 { animation-delay:.30s; }
+.delay-400 { animation-delay:.40s; }
+.delay-500 { animation-delay:.50s; }
