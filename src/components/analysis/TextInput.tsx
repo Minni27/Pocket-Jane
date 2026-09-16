@@ -23,33 +23,29 @@ export default function TextInput({ value, onChange }: Props) {
         aspectRatio: "4/3",
         display: "flex",
         flexDirection: "column",
-        background: "#0f0e14",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
         transition: "border-color 0.2s ease",
       }}
       onFocusCapture={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(139,26,48,0.35)";
+        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-accent)";
       }}
       onBlurCapture={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)";
+        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)";
       }}
     >
       {/* Header */}
       <div
         className="flex items-center gap-2 px-4 py-3"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+        style={{ borderBottom: "1px solid var(--border-soft)" }}
       >
-        <span style={{ color: "#8b1a30", fontSize: "14px" }}>✦</span>
-        <span
-          style={{
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "11px",
-            fontWeight: 500,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "#6e6860",
-          }}
-        >
+        <span style={{ color: "var(--accent)", fontSize: "14px" }}>✦</span>
+        <span style={{
+          fontFamily: "var(--font-inter), sans-serif",
+          fontSize: "11px", fontWeight: 500,
+          letterSpacing: "0.1em", textTransform: "uppercase",
+          color: "var(--text-muted)",
+        }}>
           Subject Description
         </span>
       </div>
@@ -60,45 +56,34 @@ export default function TextInput({ value, onChange }: Props) {
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholderText}
         style={{
-          flex: 1,
-          resize: "none",
-          background: "transparent",
-          border: "none",
-          outline: "none",
+          flex: 1, resize: "none",
+          background: "transparent", border: "none", outline: "none",
           padding: "16px",
           fontFamily: "var(--font-inter), sans-serif",
-          fontSize: "14px",
-          fontWeight: 300,
-          lineHeight: 1.7,
-          color: "#f0ead8",
-          caretColor: "#8b1a30",
+          fontSize: "14px", fontWeight: 300, lineHeight: 1.7,
+          color: "var(--text-primary)",
+          caretColor: "var(--accent)",
         }}
-        className="placeholder-[#3a3530]"
       />
 
       {/* Footer */}
       <div
         className="flex items-center justify-between px-4 py-2"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}
+        style={{ borderTop: "1px solid var(--border-soft)" }}
       >
-        <span
-          style={{
-            fontFamily: "var(--font-cormorant), serif",
-            fontSize: "12px",
-            fontStyle: "italic",
-            color: "#3a3530",
-          }}
-        >
+        <span style={{
+          fontFamily: "var(--font-playfair), serif",
+          fontSize: "12px", fontStyle: "italic",
+          color: "var(--text-ghost)",
+        }}>
           More detail = sharper profile
         </span>
-        <span
-          style={{
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "11px",
-            color: wordCount > 20 ? "#a8832a" : "#3a3530",
-            transition: "color 0.3s ease",
-          }}
-        >
+        <span style={{
+          fontFamily: "var(--font-inter), sans-serif",
+          fontSize: "11px",
+          color: wordCount > 20 ? "var(--gold)" : "var(--text-ghost)",
+          transition: "color 0.3s ease",
+        }}>
           {wordCount} words
         </span>
       </div>

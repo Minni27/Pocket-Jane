@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -9,7 +9,9 @@ export default function ClosingCTA() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const { theme } = useTheme();
-  const isDark = theme !== "light";
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isDark = mounted && theme === "dark";
 
   return (
     <section
@@ -31,8 +33,8 @@ export default function ClosingCTA() {
           x: "-50%", y: "-50%",
           width: "500px", height: "500px", borderRadius: "50%",
           background: isDark
-            ? "radial-gradient(circle, rgba(45,91,227,0.22) 0%, transparent 70%)"
-            : "radial-gradient(circle, rgba(185,28,28,0.12) 0%, transparent 70%)",
+            ? "radial-gradient(circle, rgba(185,28,28,0.22) 0%, transparent 70%)"
+            : "radial-gradient(circle, rgba(45,91,227,0.18) 0%, transparent 70%)",
           filter: "blur(60px)", pointerEvents: "none",
         }}
       />
@@ -103,13 +105,13 @@ export default function ClosingCTA() {
             display: "inline-flex", alignItems: "center", gap: "10px",
             padding: "16px 48px", borderRadius: "8px",
             background: isDark
-              ? "linear-gradient(135deg, #2d5be3, #0f2060)"
-              : "linear-gradient(135deg, #b91c1c, #7f1d1d)",
+              ? "linear-gradient(135deg, #b91c1c, #7f1d1d)"
+              : "linear-gradient(135deg, #2d5be3, #0f2060)",
             border: "1px solid var(--border-accent)",
             boxShadow: isDark
-              ? "0 0 60px rgba(45,91,227,0.25), 0 0 120px rgba(13,18,50,0.3)"
-              : "0 4px 24px rgba(185,28,28,0.25)",
-            color: isDark ? "#dce8f5" : "#fff5f5",
+              ? "0 4px 24px rgba(185,28,28,0.25)"
+              : "0 0 60px rgba(45,91,227,0.25), 0 0 120px rgba(13,18,50,0.3)",
+            color: isDark ? "#fff5f5" : "#e8f0ff",
             fontFamily: "var(--font-playfair), serif",
             fontSize: "22px", fontWeight: 500,
             letterSpacing: "0.02em",

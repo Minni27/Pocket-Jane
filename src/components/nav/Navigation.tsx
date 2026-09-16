@@ -49,10 +49,9 @@ export default function Navigation() {
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0, transition: "all 0.4s ease",
         }}>
-          {/* Jane=teacup, Red John=smiley */}
           {isLight ? <TeacupMini /> : <SmileMini />}
         </div>
-        <span style={{
+        <span className="hidden sm:inline" style={{
           fontFamily: "var(--font-playfair), Georgia, serif",
           fontSize: "17px", fontWeight: 600,
           color: "var(--text-primary)",
@@ -63,7 +62,7 @@ export default function Navigation() {
         </span>
       </Link>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
         {links.map(({ href, label }) => {
           const active = pathname.startsWith(href);
           return (
@@ -73,7 +72,7 @@ export default function Navigation() {
               letterSpacing: "0.07em", textTransform: "uppercase",
               color: active ? "var(--accent-mid)" : "var(--text-muted)",
               textDecoration: "none",
-              padding: "6px 14px", borderRadius: "6px",
+              padding: "6px 10px", borderRadius: "6px",
               background: active ? activeBg : "transparent",
               border: active ? "1px solid var(--border-accent)" : "1px solid transparent",
               transition: "all 0.2s ease",
@@ -83,13 +82,12 @@ export default function Navigation() {
           );
         })}
 
-        {/* Toggle: light→shows smiley (click→go dark/RedJohn); dark→shows teacup (click→go light/Jane) */}
         {mounted && (
           <button
             onClick={() => setTheme(isLight ? "dark" : "light")}
             title={isLight ? "Enter Red John mode" : "Enter Jane mode"}
             style={{
-              marginLeft: "8px", width: "36px", height: "36px", borderRadius: "8px",
+              marginLeft: "4px", width: "34px", height: "34px", borderRadius: "8px",
               background: isLight ? "rgba(45,91,227,0.07)" : "rgba(185,28,28,0.08)",
               border: `1px solid ${isLight ? "rgba(45,91,227,0.18)" : "rgba(185,28,28,0.20)"}`,
               display: "flex", alignItems: "center", justifyContent: "center",

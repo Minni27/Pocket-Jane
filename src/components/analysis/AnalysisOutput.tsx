@@ -1,18 +1,23 @@
 "use client";
 
+import { useState, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
+import type { Profile } from "@/types/profile";
+
+type Outcome = "success" | "partial" | "miss";
+
 interface Props {
   isLoading: boolean;
-  result: object | null;
+  result: Profile | null;
 }
 
 export default function AnalysisOutput({ isLoading, result }: Props) {
   if (isLoading) return <LoadingSkeleton />;
   if (!result) return null;
-
-  // TODO: replace with real structured data from API
-  return <PlaceholderResult />;
+  return <ProfileResult profile={result} />;
 }
 
+/* ─── Loading skeleton ──────────────────────────────────────── */
 function LoadingSkeleton() {
   return (
     <div className="animate-fade-in flex flex-col gap-4">
@@ -29,9 +34,9 @@ function LoadingSkeleton() {
       </div>
       <div className="card p-5">
         <div className="shimmer h-3 w-32 rounded mb-4" />
-        {[...Array(4)].map((_, i) => (
+        {[...Array(3)].map((_, i) => (
           <div key={i} className="flex gap-3 mb-3">
-            <div className="shimmer w-1 h-full rounded" style={{ minHeight: "40px", width: "2px" }} />
+            <div className="shimmer rounded" style={{ minHeight: "40px", width: "2px" }} />
             <div className="flex-1">
               <div className="shimmer h-2 w-full rounded mb-2" />
               <div className="shimmer h-2 w-3/4 rounded" />
@@ -43,143 +48,90 @@ function LoadingSkeleton() {
   );
 }
 
-const demoProfile = {
-  archetype: "The Calculated Optimist",
-  confidence: 78,
-  dominantTraits: [
-    { name: "High Need for Recognition", strength: 85 },
-    { name: "Conflict Avoidance", strength: 72 },
-    { name: "Reciprocity Sensitivity", strength: 68 },
-  ],
-  methodology: [
-    {
-      icon: "⊕",
-      framework: "Cialdini — Social Proof",
-      observation: "Repeatedly referenced what others in their position have done.",
-      inference: "Seeks validation through consensus before committing.",
-      cite: "Influence, Ch.4",
-    },
-    {
-      icon: "◈",
-      framework: "Ekman — Microexpressions",
-      observation: "Brief contempt flash when budget was mentioned.",
-      inference: "Price sensitivity is real; framing matters more than number.",
-      cite: "Emotions Revealed, Ch.7",
-    },
-    {
-      icon: "◉",
-      framework: "Voss — Tactical Empathy",
-      observation: "Leaned in when speaking about team impact.",
-      inference: "Identity is tied to how this decision affects their team.",
-      cite: "Never Split the Difference, Ch.5",
-    },
-  ],
-  persuasionAngles: [
-    { label: "Lead with", text: "Peer adoption story — who else is doing this." },
-    { label: "Avoid", text: "Pressure tactics. They'll retreat." },
-    { label: "Unlock with", text: `"What would make this a no-brainer for your team?"` },
-    { label: "Expect objection", text: "Budget. Counter: ROI framing, not price defense." },
-  ],
-};
-
-function PlaceholderResult() {
+/* ─── Full profile result ───────────────────────────────────── */
+function ProfileResult({ profile }: { profile: Profile }) {
   return (
-    <div className="animate-fade-up flex flex-col gap-6">
+    <div id="profile-print-root" className="animate-fade-up flex flex-col gap-6">
 
-      {/* Divider */}
-      <div className="divider-ornate">◈ Profile</div>
+      {/* Print header (hidden on screen) */}
+      <div className="print-only" style={{ display: "none" }}>
+        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#888", marginBottom: "4px" }}>Pocket Jane — Psychological Profile</p>
+        <h1 style={{ fontFamily: "var(--font-playfair), serif", fontSize: "28px", fontWeight: 700, marginBottom: "2px" }}>{profile.archetype}</h1>
+        <p style={{ fontSize: "12px", color: "#666" }}>{profile.summary}</p>
+        <hr style={{ margin: "16px 0", borderColor: "#ddd" }} />
+      </div>
 
-      {/* Top cards */}
+      {/* Section label + PDF button */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="divider-ornate" style={{ flex: 1 }}>◈ Profile</div>
+        <button
+          onClick={() => window.print()}
+          className="no-print"
+          style={{
+            marginLeft: "16px", flexShrink: 0,
+            padding: "6px 14px", borderRadius: "6px",
+            background: "transparent", border: "1px solid var(--border)",
+            color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif",
+            fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em",
+            cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; e.currentTarget.style.color = "var(--accent)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Save PDF
+        </button>
+      </div>
+
+      {/* Top: archetype + traits */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-        {/* Archetype */}
-        <div
-          className="card p-5 col-span-1"
-          style={{ borderColor: "rgba(168,131,42,0.2)" }}
-        >
-          <div
-            style={{
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: "10px",
-              fontWeight: 500,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "#6e6860",
-              marginBottom: "10px",
-            }}
-          >
+        {/* Archetype card */}
+        <div className="card p-5 col-span-1" style={{ borderColor: "var(--border-gold)", position: "relative", overflow: "hidden" }}>
+          {/* Ghost watermark */}
+          <div style={{
+            position: "absolute", bottom: "-12px", right: "-8px",
+            fontFamily: "var(--font-playfair), serif",
+            fontSize: "80px", fontWeight: 900, lineHeight: 1,
+            color: "var(--accent)", opacity: 0.04,
+            userSelect: "none", pointerEvents: "none",
+          }}>◈</div>
+
+          <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "10px" }}>
             Archetype
           </div>
-          <div
-            style={{
-              fontFamily: "var(--font-cormorant), serif",
-              fontSize: "22px",
-              fontWeight: 500,
-              color: "#f0ead8",
-              lineHeight: 1.2,
-              marginBottom: "12px",
-            }}
-          >
-            {demoProfile.archetype}
+          <div style={{ fontFamily: "var(--font-playfair), serif", fontSize: "clamp(18px,2.5vw,22px)", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.15, marginBottom: "10px" }}>
+            {profile.archetype}
           </div>
-          <ConfidenceMeter value={demoProfile.confidence} />
+          {profile.summary && (
+            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "14px", fontStyle: "italic" }}>
+              {profile.summary}
+            </p>
+          )}
+          <ConfidenceMeter value={profile.confidence} />
         </div>
 
-        {/* Dominant Traits */}
+        {/* Dominant traits */}
         <div className="card p-5 col-span-1 md:col-span-2">
-          <div
-            style={{
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: "10px",
-              fontWeight: 500,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "#6e6860",
-              marginBottom: "14px",
-            }}
-          >
+          <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "16px" }}>
             Dominant Traits
           </div>
-          <div className="flex flex-col gap-3">
-            {demoProfile.dominantTraits.map((t) => (
+          <div className="flex flex-col gap-4">
+            {profile.dominantTraits.map((t) => (
               <div key={t.name}>
-                <div className="flex justify-between mb-1.5">
-                  <span
-                    style={{
-                      fontFamily: "var(--font-inter), sans-serif",
-                      fontSize: "13px",
-                      fontWeight: 400,
-                      color: "#b8af9a",
-                    }}
-                  >
+                <div className="flex justify-between mb-2">
+                  <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 400, color: "var(--text-dim)" }}>
                     {t.name}
                   </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-inter), sans-serif",
-                      fontSize: "12px",
-                      color: "#6e6860",
-                    }}
-                  >
+                  <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: "14px", fontWeight: 600, color: "var(--accent)" }}>
                     {t.strength}%
                   </span>
                 </div>
-                <div
-                  className="rounded-full"
-                  style={{
-                    height: "3px",
-                    background: "rgba(255,255,255,0.07)",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${t.strength}%`,
-                      background: `linear-gradient(90deg, #5c0a17, #c9a84c)`,
-                      transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
-                    }}
-                  />
+                <div className="rounded-full" style={{ height: "4px", background: "var(--raised)", overflow: "hidden" }}>
+                  <div className="h-full rounded-full" style={{ width: `${t.strength}%`, background: "linear-gradient(90deg, var(--accent), var(--accent-bright))", transition: "width 1.2s cubic-bezier(0.4,0,0.2,1)" }} />
                 </div>
               </div>
             ))}
@@ -187,210 +139,191 @@ function PlaceholderResult() {
         </div>
       </div>
 
-      {/* Methodology */}
+      {/* Methodology — expandable */}
       <div className="divider-ornate" style={{ marginTop: "4px" }}>◎ Methodology</div>
-      <div className="flex flex-col gap-3">
-        {demoProfile.methodology.map((m) => (
-          <div
-            key={m.framework}
-            className="card p-5"
-            style={{ borderLeft: "2px solid #5c0a17" }}
-          >
-            <div className="flex items-start gap-4">
-              <span
-                style={{
-                  fontFamily: "var(--font-cormorant), serif",
-                  fontSize: "20px",
-                  color: "#8b1a30",
-                  lineHeight: 1,
-                  marginTop: "2px",
-                }}
-              >
-                {m.icon}
-              </span>
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <span
-                    style={{
-                      fontFamily: "var(--font-inter), sans-serif",
-                      fontSize: "12px",
-                      fontWeight: 500,
-                      color: "#c9a84c",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    {m.framework}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-inter), sans-serif",
-                      fontSize: "10px",
-                      color: "#3a3530",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    {m.cite}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-inter), sans-serif",
-                    fontSize: "13px",
-                    fontWeight: 300,
-                    color: "#b8af9a",
-                    marginBottom: "4px",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  <span style={{ color: "#6e6860" }}>Observed: </span>
-                  {m.observation}
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-inter), sans-serif",
-                    fontSize: "13px",
-                    fontWeight: 300,
-                    color: "#b8af9a",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  <span style={{ color: "#6e6860" }}>Inference: </span>
-                  {m.inference}
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="flex flex-col gap-2">
+        {profile.methodology.map((m, i) => (
+          <MethodologyCard key={m.framework} step={m} defaultOpen={i === 0} />
         ))}
       </div>
 
       {/* Persuasion vectors */}
       <div className="divider-ornate" style={{ marginTop: "4px" }}>✦ Persuasion Vectors</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {demoProfile.persuasionAngles.map((p) => (
-          <div
-            key={p.label}
-            className="card-gold p-4"
-          >
-            <div
-              style={{
-                fontFamily: "var(--font-inter), sans-serif",
-                fontSize: "10px",
-                fontWeight: 600,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: "#a8832a",
-                marginBottom: "6px",
-              }}
-            >
+        {profile.persuasionAngles.map((p) => (
+          <div key={p.label} className="card p-4" style={{ borderColor: "var(--border-gold)" }}>
+            <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gold-dim)", marginBottom: "8px" }}>
               {p.label}
             </div>
-            <p
-              style={{
-                fontFamily: "var(--font-cormorant), serif",
-                fontSize: "17px",
-                fontWeight: 400,
-                color: "#f0ead8",
-                lineHeight: 1.4,
-              }}
-            >
+            <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "16px", fontWeight: 400, color: "var(--text-primary)", lineHeight: 1.5 }}>
               {p.text}
             </p>
           </div>
         ))}
       </div>
 
-      {/* Feedback prompt */}
-      <div
-        className="card p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2"
-        style={{ borderColor: "rgba(255,255,255,0.05)" }}
+      {/* Outcome logger */}
+      <OutcomeLogger id={profile.id ?? null} />
+    </div>
+  );
+}
+
+/* ─── Expandable methodology card ──────────────────────────── */
+function MethodologyCard({ step, defaultOpen }: { step: Profile["methodology"][number]; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className="card" style={{ borderLeft: "2px solid var(--accent)", overflow: "hidden" }}>
+      {/* Header row — always visible */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", gap: "14px",
+          padding: "14px 20px", background: "transparent", border: "none",
+          cursor: "pointer", textAlign: "left",
+        }}
       >
-        <div>
-          <p
-            style={{
-              fontFamily: "var(--font-cormorant), serif",
-              fontSize: "18px",
-              color: "#f0ead8",
-              marginBottom: "4px",
-            }}
-          >
-            How did the interaction go?
-          </p>
-          <p
-            style={{
-              fontFamily: "var(--font-inter), sans-serif",
-              fontSize: "12px",
-              fontWeight: 300,
-              color: "#6e6860",
-            }}
-          >
-            Log the outcome. Jane learns from the gap between prediction and reality.
-          </p>
+        <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: "18px", color: "var(--accent)", lineHeight: 1, flexShrink: 0 }}>
+          {step.icon}
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 600, color: "var(--gold)", letterSpacing: "0.04em" }}>
+            {step.framework}
+          </span>
+          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", color: "var(--text-ghost)", letterSpacing: "0.06em", marginLeft: "10px" }}>
+            {step.cite}
+          </span>
         </div>
-        <button
-          style={{
-            padding: "10px 24px",
-            borderRadius: "8px",
-            background: "transparent",
-            border: "1px solid rgba(168,131,42,0.3)",
-            color: "#c9a84c",
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "12px",
-            fontWeight: 500,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(168,131,42,0.1)";
-            e.currentTarget.style.borderColor = "rgba(168,131,42,0.5)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-            e.currentTarget.style.borderColor = "rgba(168,131,42,0.3)";
-          }}
+        <svg
+          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-ghost)" strokeWidth="2" strokeLinecap="round"
+          style={{ flexShrink: 0, transition: "transform 0.25s ease", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
         >
-          Log Outcome →
-        </button>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {/* Expandable body */}
+      <div style={{
+        maxHeight: open ? "300px" : "0px",
+        overflow: "hidden",
+        transition: "max-height 0.35s cubic-bezier(0.16,1,0.3,1)",
+      }}>
+        <div style={{ padding: "0 20px 16px 52px", display: "flex", flexDirection: "column", gap: "6px" }}>
+          <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-dim)", lineHeight: 1.65 }}>
+            <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>Observed: </span>
+            {step.observation}
+          </div>
+          <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-dim)", lineHeight: 1.65 }}>
+            <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>Inference: </span>
+            {step.inference}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
+/* ─── Outcome logger ────────────────────────────────────────── */
+const OUTCOME_OPTIONS: { value: Outcome; label: string; color: string }[] = [
+  { value: "success", label: "Accurate", color: "var(--gold)"     },
+  { value: "partial", label: "Partial",  color: "var(--text-dim)" },
+  { value: "miss",    label: "Missed",   color: "var(--accent)"   },
+];
+
+function OutcomeLogger({ id }: { id: string | null }) {
+  const [picking, setPicking] = useState(false);
+  const [saved, setSaved] = useState<Outcome | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  async function log(outcome: Outcome) {
+    setSaving(true);
+    setPicking(false);
+    if (id) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.from("analyses").update({ outcome } as any).eq("id", id);
+      if (error) { showToast("Failed to save — try again"); setSaving(false); return; }
+    }
+    setSaved(outcome);
+    setSaving(false);
+    const label = OUTCOME_OPTIONS.find((o) => o.value === outcome)?.label ?? outcome;
+    showToast(`Logged as ${label}`);
+  }
+
+  const savedMeta = saved ? OUTCOME_OPTIONS.find((o) => o.value === saved) : null;
+
+  return (
+    <>
+      {toast && (
+        <div className="no-print" style={{
+          position: "fixed", bottom: "32px", left: "50%", transform: "translateX(-50%)",
+          zIndex: 999, padding: "14px 28px", borderRadius: "10px",
+          background: "var(--surface)", border: `1px solid ${savedMeta?.color ?? "var(--accent)"}`,
+          boxShadow: "0 0 32px rgba(0,0,0,0.4)",
+          display: "flex", alignItems: "center", gap: "10px",
+          animation: "fadeUp 0.3s ease", whiteSpace: "nowrap",
+        }}>
+          <span style={{ fontSize: "16px", color: savedMeta?.color ?? "var(--accent)" }}>✓</span>
+          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "14px", fontWeight: 500, color: "var(--text-primary)" }}>{toast}</span>
+        </div>
+      )}
+
+      <div className="card no-print p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2" style={{ borderColor: "var(--border-soft)" }}>
+        <div>
+          <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "18px", color: "var(--text-primary)", marginBottom: "4px" }}>
+            How did the interaction go?
+          </p>
+          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-muted)" }}>
+            Log the outcome. Jane learns from the gap between prediction and reality.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {savedMeta ? (
+            <span onClick={() => { setSaved(null); setPicking(true); }} title="Click to change" style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", color: savedMeta.color, background: "var(--raised)", border: `1px solid ${savedMeta.color}55`, borderRadius: "8px", padding: "8px 18px", cursor: "pointer", whiteSpace: "nowrap" }}>
+              ✓ {savedMeta.label}
+            </span>
+          ) : picking ? (
+            <>
+              {OUTCOME_OPTIONS.map((o) => (
+                <button key={o.value} onClick={() => log(o.value)} disabled={saving} style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", color: o.color, background: "var(--surface)", border: `1px solid ${o.color}55`, borderRadius: "7px", padding: "8px 14px", cursor: "pointer", transition: "all 0.15s ease", whiteSpace: "nowrap" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface)"; }}
+                >{o.label}</button>
+              ))}
+              <button onClick={() => setPicking(false)} style={{ fontSize: "12px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "8px 4px" }}>✕</button>
+            </>
+          ) : (
+            <button onClick={() => setPicking(true)} style={{ padding: "10px 24px", borderRadius: "8px", background: "transparent", border: "1px solid var(--border-gold)", color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s ease" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-gold)"; }}
+            >Log Outcome →</button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ─── Confidence meter ──────────────────────────────────────── */
 function ConfidenceMeter({ value }: { value: number }) {
-  const color = value >= 75 ? "#c9a84c" : value >= 50 ? "#8b6020" : "#5c0a17";
+  const color = value >= 75 ? "var(--gold)" : value >= 55 ? "var(--text-dim)" : "var(--accent)";
   return (
     <div>
       <div className="flex justify-between items-center mb-1.5">
-        <span
-          style={{
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "10px",
-            fontWeight: 500,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "#6e6860",
-          }}
-        >
+        <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)" }}>
           Confidence
         </span>
-        <span style={{ fontFamily: "var(--font-cormorant), serif", fontSize: "18px", color }}>
+        <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: "18px", fontWeight: 600, color }}>
           {value}%
         </span>
       </div>
-      <div
-        className="rounded-full"
-        style={{ height: "3px", background: "rgba(255,255,255,0.07)" }}
-      >
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: `${value}%`,
-            background: color,
-            transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
-          }}
-        />
+      <div className="rounded-full" style={{ height: "4px", background: "var(--raised)" }}>
+        <div className="h-full rounded-full" style={{ width: `${value}%`, background: color, transition: "width 1s cubic-bezier(0.4,0,0.2,1)" }} />
       </div>
     </div>
   );

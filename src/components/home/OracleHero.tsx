@@ -104,7 +104,7 @@ export default function OracleHero() {
           <div style={{ overflow: "hidden", marginBottom: "6px" }}>
             <motion.h1 style={{
               fontFamily: "var(--font-playfair),Georgia,serif",
-              fontSize: "clamp(3rem,10vw,8rem)", fontWeight: 700,
+              fontSize: "clamp(1.7rem,8.5vw,8rem)", fontWeight: 700,
               lineHeight: 0.95, letterSpacing: "-0.03em",
               color: line1Color, margin: 0, whiteSpace: "nowrap",
               clipPath: readClip, WebkitClipPath: readClip, opacity: readOp,
@@ -117,7 +117,7 @@ export default function OracleHero() {
           {/* Line 2 — slide */}
           <motion.h1 style={{
             fontFamily: "var(--font-playfair),Georgia,serif",
-            fontSize: "clamp(3rem,10vw,8rem)", fontWeight: 400, fontStyle: "italic",
+            fontSize: "clamp(1.7rem,8.5vw,8rem)", fontWeight: 400, fontStyle: "italic",
             lineHeight: 0.95, letterSpacing: "-0.03em",
             color: line2Color, margin: 0, marginBottom: "52px",
             whiteSpace: "nowrap", textShadow: line2Glow,

@@ -1,79 +1,152 @@
 "use client";
 
-const mockHistory = [
-  {
-    id: "1",
-    date: "Sep 15, 2026",
-    time: "2:34 PM",
-    archetype: "The Calculated Optimist",
-    confidence: 78,
-    mode: "camera",
-    outcome: "accurate",
-    tags: ["Cialdini", "Voss", "Ekman"],
-  },
-  {
-    id: "2",
-    date: "Sep 14, 2026",
-    time: "10:18 AM",
-    archetype: "The Defensive Strategist",
-    confidence: 64,
-    mode: "text",
-    outcome: "partial",
-    tags: ["Navarro", "Kahneman"],
-  },
-  {
-    id: "3",
-    date: "Sep 13, 2026",
-    time: "5:52 PM",
-    archetype: "The Approval Seeker",
-    confidence: 81,
-    mode: "camera",
-    outcome: null,
-    tags: ["Cialdini", "Greene"],
-  },
-];
+import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
-const outcomeStyle: Record<string, { label: string; color: string; bg: string }> = {
-  accurate: { label: "Accurate", color: "#a8832a", bg: "rgba(168,131,42,0.1)" },
-  partial:  { label: "Partial",  color: "#8b6020", bg: "rgba(139,96,32,0.1)"  },
-  missed:   { label: "Missed",   color: "#8b1a30", bg: "rgba(139,26,48,0.1)"  },
+type Outcome = "success" | "partial" | "miss";
+
+interface AnalysisRow {
+  id: string;
+  created_at: string;
+  input_type: "camera" | "text";
+  input_text: string | null;
+  archetype: string;
+  confidence: number;
+  summary: string;
+  dominant_traits: { name: string; strength: number }[];
+  methodology: { framework: string }[];
+  persuasion_angles: { label: string; text: string }[];
+  outcome: Outcome | null;
+  outcome_note: string | null;
+}
+
+const OUTCOME_META: Record<Outcome, { label: string; color: string; bg: string }> = {
+  success: { label: "Accurate",  color: "var(--gold)",       bg: "var(--raised)"   },
+  partial: { label: "Partial",   color: "var(--text-dim)",   bg: "var(--surface)"  },
+  miss:    { label: "Missed",    color: "var(--accent)",     bg: "var(--surface)"  },
 };
 
 export default function HistoryPage() {
+  const [rows, setRows] = useState<AnalysisRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [logging, setLogging] = useState<string | null>(null);
+  const [justSaved, setJustSaved] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ label: string; color: string } | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const showToast = useCallback((label: string, color: string) => {
+    setToast({ label, color });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  useEffect(() => {
+    supabase
+      .from("analyses")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("[history] fetch error:", error.message);
+          setFetchError(error.message);
+        } else {
+          setRows((data as AnalysisRow[]) ?? []);
+        }
+        setLoading(false);
+      });
+  }, []);
+
+  async function deleteRow(id: string) {
+    await supabase.from("analyses").delete().eq("id", id);
+    setRows((prev) => prev.filter((r) => r.id !== id));
+  }
+
+  async function logOutcome(id: string, outcome: Outcome) {
+    setLogging(null);
+    setUpdateError(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase.from("analyses").update({ outcome } as any).eq("id", id);
+    if (error) {
+      console.error("[history] update error:", error.message);
+      setUpdateError(`Failed to save: ${error.message}`);
+      return;
+    }
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, outcome } : r)));
+    setJustSaved(id);
+    setTimeout(() => setJustSaved(null), 2500);
+    const labels = { success: "Accurate", partial: "Partial", miss: "Missed" };
+    const colors = { success: "var(--gold)", partial: "var(--text-dim)", miss: "var(--accent)" };
+    showToast(`Outcome logged — ${labels[outcome]}`, colors[outcome]);
+  }
+
+  const total    = rows.length;
+  const avgConf  = total ? Math.round(rows.reduce((s, r) => s + r.confidence, 0) / total) : 0;
+  const logged   = rows.filter((r) => r.outcome).length;
+
   return (
     <div className="flex flex-col flex-1 px-4 py-8 max-w-4xl mx-auto w-full gap-8">
 
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: "32px", left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 999,
+          padding: "14px 28px",
+          borderRadius: "10px",
+          background: "var(--surface)",
+          border: `1px solid ${toast.color}`,
+          boxShadow: `0 0 32px rgba(0,0,0,0.4), 0 0 16px ${toast.color}33`,
+          display: "flex", alignItems: "center", gap: "10px",
+          animation: "fadeUp 0.3s ease",
+          whiteSpace: "nowrap",
+        }}>
+          <span style={{ fontSize: "16px", color: toast.color }}>✓</span>
+          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "14px", fontWeight: 500, color: "var(--text-primary)" }}>
+            {toast.label}
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div>
-        <h1
-          style={{
-            fontFamily: "var(--font-cormorant), serif",
-            fontSize: "clamp(2rem, 5vw, 3rem)",
-            fontWeight: 300,
-            color: "#f0ead8",
-            lineHeight: 1.1,
-            marginBottom: "6px",
-          }}
-        >
+        <h1 style={{
+          fontFamily: "var(--font-playfair), serif",
+          fontSize: "clamp(2rem, 5vw, 3rem)",
+          fontWeight: 600,
+          color: "var(--text-primary)",
+          lineHeight: 1.1,
+          marginBottom: "6px",
+        }}>
           Analysis History
         </h1>
-        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "#6e6860" }}>
+        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-muted)" }}>
           Every profile Jane has built. Log outcomes to train your accuracy.
         </p>
       </div>
 
-      {/* Stats row */}
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Total Analyses", value: "3"   },
-          { label: "Avg Confidence", value: "74%" },
-          { label: "Outcomes Logged", value: "2/3" },
+          { label: "Total Analyses",  value: total || "—"             },
+          { label: "Avg Confidence",  value: total ? `${avgConf}%` : "—" },
+          { label: "Outcomes Logged", value: total ? `${logged}/${total}` : "—" },
         ].map((s) => (
-          <div key={s.label} className="card p-4 text-center" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-            <div style={{ fontFamily: "var(--font-cormorant), serif", fontSize: "28px", fontWeight: 300, color: "#f0ead8", marginBottom: "4px" }}>
+          <div key={s.label} className="card p-4 text-center">
+            <div style={{
+              fontFamily: "var(--font-playfair), serif",
+              fontSize: "28px", fontWeight: 400,
+              color: "var(--text-primary)", marginBottom: "4px",
+            }}>
               {s.value}
             </div>
-            <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "#3a3530" }}>
+            <div style={{
+              fontFamily: "var(--font-inter), sans-serif",
+              fontSize: "10px", fontWeight: 500,
+              letterSpacing: "0.1em", textTransform: "uppercase",
+              color: "var(--text-ghost)",
+            }}>
               {s.label}
             </div>
           </div>
@@ -81,68 +154,209 @@ export default function HistoryPage() {
       </div>
 
       {/* List */}
-      <div className="flex flex-col gap-3">
-        {mockHistory.map((h) => {
-          const outcome = h.outcome ? outcomeStyle[h.outcome] : null;
-          return (
-            <div
-              key={h.id}
-              className="card p-5 flex flex-col sm:flex-row sm:items-center gap-4 cursor-pointer"
-              style={{ transition: "border-color 0.2s ease, box-shadow 0.2s ease" }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(168,131,42,0.2)";
-                (e.currentTarget as HTMLDivElement).style.boxShadow = "0 0 20px rgba(168,131,42,0.05)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.07)";
-                (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
-              }}
-            >
-              {/* Mode icon */}
-              <div style={{ width: "40px", height: "40px", borderRadius: "8px", background: "rgba(139,26,48,0.1)", border: "1px solid rgba(139,26,48,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", color: "#8b1a30", flexShrink: 0 }}>
-                {h.mode === "camera" ? "◎" : "✦"}
-              </div>
+      {updateError && (
+        <div style={{ padding: "12px 16px", borderRadius: "8px", background: "var(--surface)", border: "1px solid var(--border-accent)", color: "var(--accent)", fontFamily: "var(--font-inter), sans-serif", fontSize: "13px" }}>
+          {updateError}
+        </div>
+      )}
 
-              {/* Main info */}
-              <div className="flex-1 min-w-0">
-                <p style={{ fontFamily: "var(--font-cormorant), serif", fontSize: "19px", fontWeight: 500, color: "#f0ead8", marginBottom: "4px" }}>
-                  {h.archetype}
-                </p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "#3a3530" }}>
-                    {h.date} · {h.time}
-                  </span>
-                  <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "#a8832a" }}>
-                    {h.confidence}% confidence
-                  </span>
-                  <div className="flex gap-1 flex-wrap">
-                    {h.tags.map((t) => (
-                      <span key={t} style={{ fontFamily: "var(--font-inter)", fontSize: "9px", fontWeight: 500, letterSpacing: "0.08em", color: "#3a3530", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "3px", padding: "2px 6px" }}>
-                        {t}
-                      </span>
-                    ))}
+      {fetchError && (
+        <div style={{ padding: "12px 16px", borderRadius: "8px", background: "var(--surface)", border: "1px solid var(--border-accent)", color: "var(--accent)", fontFamily: "var(--font-inter), sans-serif", fontSize: "13px" }}>
+          Supabase error: {fetchError}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex flex-col gap-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="card p-5" style={{ height: "72px" }}>
+              <div className="shimmer h-3 w-48 rounded mb-3" />
+              <div className="shimmer h-2 w-32 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="card p-10 text-center">
+          <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "20px", color: "var(--text-muted)", fontStyle: "italic" }}>
+            No analyses yet.
+          </p>
+          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", color: "var(--text-ghost)", marginTop: "8px" }}>
+            Go to Analyze and profile someone first.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {rows.map((row) => {
+            const outcomeMeta = row.outcome ? OUTCOME_META[row.outcome] : null;
+            const date = new Date(row.created_at);
+            const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+            const timeStr = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+            const frameworks = (row.methodology as { framework: string }[])
+              .map((m) => m.framework.split("—")[0].trim())
+              .slice(0, 3);
+
+            return (
+              <div
+                key={row.id}
+                className="card p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+                style={{ transition: "border-color 0.2s ease" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-accent)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = ""; }}
+              >
+                {/* Mode icon */}
+                <Link href={`/history/${row.id}`} style={{ textDecoration: "none", flexShrink: 0 }}>
+                  <div style={{
+                    width: "40px", height: "40px", borderRadius: "8px",
+                    background: "var(--raised)", border: "1px solid var(--border-accent)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "16px", color: "var(--accent)",
+                    transition: "background 0.15s ease",
+                  }}>
+                    {row.input_type === "camera" ? "◎" : "✦"}
+                  </div>
+                </Link>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <Link href={`/history/${row.id}`} style={{ textDecoration: "none" }}>
+                  <p style={{
+                    fontFamily: "var(--font-playfair), serif",
+                    fontSize: "19px", fontWeight: 500,
+                    color: "var(--text-primary)", marginBottom: "4px",
+                    transition: "color 0.15s ease",
+                  }}>
+                    {row.archetype}
+                  </p>
+                  </Link>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "var(--text-ghost)" }}>
+                      {dateStr} · {timeStr}
+                    </span>
+                    <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "var(--gold-dim)" }}>
+                      {row.confidence}% confidence
+                    </span>
+                    <div className="flex gap-1 flex-wrap">
+                      {frameworks.map((f) => (
+                        <span key={f} style={{
+                          fontFamily: "var(--font-inter)", fontSize: "9px",
+                          fontWeight: 500, letterSpacing: "0.08em",
+                          color: "var(--text-ghost)",
+                          background: "var(--surface)", border: "1px solid var(--border)",
+                          borderRadius: "3px", padding: "2px 6px",
+                        }}>
+                          {f}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Outcome / log button */}
-              {outcome ? (
-                <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", fontWeight: 500, letterSpacing: "0.08em", color: outcome.color, background: outcome.bg, borderRadius: "6px", padding: "4px 12px", whiteSpace: "nowrap" as const, flexShrink: 0 }}>
-                  {outcome.label}
-                </span>
-              ) : (
+                {/* Delete */}
                 <button
-                  style={{ fontFamily: "var(--font-inter)", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", color: "#6e6860", background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "6px", padding: "4px 12px", cursor: "pointer", whiteSpace: "nowrap" as const, flexShrink: 0, transition: "all 0.2s ease" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "#c9a84c"; e.currentTarget.style.borderColor = "rgba(168,131,42,0.3)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "#6e6860"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                  onClick={() => deleteRow(row.id)}
+                  title="Delete"
+                  style={{
+                    width: "28px", height: "28px", borderRadius: "6px", flexShrink: 0,
+                    background: "transparent", border: "1px solid var(--border)",
+                    color: "var(--text-ghost)", cursor: "pointer", fontSize: "12px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-ghost)"; e.currentTarget.style.borderColor = "var(--border)"; }}
                 >
-                  Log outcome
+                  ✕
                 </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
+
+                {/* Outcome / log */}
+                {justSaved === row.id ? (
+                  <span style={{
+                    fontFamily: "var(--font-inter)", fontSize: "11px", fontWeight: 600,
+                    letterSpacing: "0.08em", color: "var(--gold)",
+                    background: "var(--raised)", border: "1px solid var(--border-gold)",
+                    borderRadius: "6px", padding: "4px 12px",
+                    whiteSpace: "nowrap", flexShrink: 0,
+                    animation: "fadeIn 0.2s ease",
+                  }}>
+                    ✓ Saved
+                  </span>
+                ) : outcomeMeta ? (
+                  <span
+                    onClick={() => setLogging(row.id)}
+                    title="Click to change"
+                    style={{
+                      fontFamily: "var(--font-inter)", fontSize: "11px", fontWeight: 500,
+                      letterSpacing: "0.08em", color: outcomeMeta.color,
+                      background: outcomeMeta.bg, border: "1px solid var(--border)",
+                      borderRadius: "6px", padding: "4px 12px",
+                      whiteSpace: "nowrap", flexShrink: 0,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {outcomeMeta.label}
+                  </span>
+                ) : logging === row.id ? (
+                  <OutcomePicker
+                    onPick={(o) => logOutcome(row.id, o)}
+                    onCancel={() => setLogging(null)}
+                  />
+                ) : (
+                  <button
+                    onClick={() => setLogging(row.id)}
+                    style={{
+                      fontFamily: "var(--font-inter)", fontSize: "11px", fontWeight: 500,
+                      letterSpacing: "0.06em", color: "var(--text-muted)",
+                      background: "transparent", border: "1px solid var(--border)",
+                      borderRadius: "6px", padding: "4px 12px",
+                      cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+                  >
+                    Log outcome
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OutcomePicker({ onPick, onCancel }: { onPick: (o: Outcome) => void; onCancel: () => void }) {
+  const options: { value: Outcome; label: string }[] = [
+    { value: "success", label: "Accurate" },
+    { value: "partial", label: "Partial"  },
+    { value: "miss",    label: "Missed"   },
+  ];
+  return (
+    <div className="flex items-center gap-1 flex-shrink-0">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          onClick={() => onPick(o.value)}
+          style={{
+            fontFamily: "var(--font-inter)", fontSize: "10px", fontWeight: 500,
+            letterSpacing: "0.06em", color: "var(--text-muted)",
+            background: "var(--surface)", border: "1px solid var(--border)",
+            borderRadius: "5px", padding: "4px 10px",
+            cursor: "pointer", transition: "all 0.15s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+        >
+          {o.label}
+        </button>
+      ))}
+      <button
+        onClick={onCancel}
+        style={{ fontSize: "11px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "4px" }}
+      >
+        ✕
+      </button>
     </div>
   );
 }

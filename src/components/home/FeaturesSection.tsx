@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
 
@@ -60,7 +60,9 @@ const features = [
 
 export default function FeaturesSection() {
   const { theme } = useTheme();
-  const isLight = theme !== "dark";
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isLight = !mounted || theme !== "dark";
   const headingRef = useRef<HTMLDivElement>(null);
   const inView = useInView(headingRef, { once: true, margin: "-80px" });
   const [active, setActive] = useState(0);
@@ -79,7 +81,6 @@ export default function FeaturesSection() {
     go(active === features.length - 1 ? 0 : active + 1);
   }
 
-  const accentColor = isLight ? "var(--accent)" : "var(--accent)";
   const accentRgbLight = "45,91,227";
   const accentRgbDark  = "185,28,28";
 
@@ -143,49 +144,17 @@ export default function FeaturesSection() {
           </AnimatePresence>
         </div>
 
-        {/* Prev / Next arrows */}
-        <button
-          onClick={prev}
-          aria-label="Previous"
-          style={{
-            position: "absolute", left: "-20px", top: "50%", transform: "translateY(-50%)",
-            width: "40px", height: "40px", borderRadius: "50%",
-            background: "var(--surface)", border: "1px solid var(--border)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", color: "var(--text-muted)",
-            boxShadow: "var(--shadow-card)",
-            transition: "all 0.2s ease",
-            zIndex: 2,
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        <button
-          onClick={next}
-          aria-label="Next"
-          style={{
-            position: "absolute", right: "-20px", top: "50%", transform: "translateY(-50%)",
-            width: "40px", height: "40px", borderRadius: "50%",
-            background: "var(--surface)", border: "1px solid var(--border)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", color: "var(--text-muted)",
-            boxShadow: "var(--shadow-card)",
-            transition: "all 0.2s ease",
-            zIndex: 2,
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+        {/* Prev / Next + dots row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", marginTop: "20px" }}>
+          <button onClick={prev} aria-label="Previous" style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-muted)", boxShadow: "var(--shadow-card)", transition: "all 0.2s ease", flexShrink: 0 }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; e.currentTarget.style.color = "var(--accent)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
 
         {/* Dot indicators */}
-        <div style={{
-          display: "flex", justifyContent: "center", gap: "8px",
-          marginTop: "28px",
-        }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: "8px" }}>
           {features.map((_, i) => (
             <button
               key={i}
@@ -201,6 +170,14 @@ export default function FeaturesSection() {
               }}
             />
           ))}
+        </div>
+
+          <button onClick={next} aria-label="Next" style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-muted)", boxShadow: "var(--shadow-card)", transition: "all 0.2s ease", flexShrink: 0 }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; e.currentTarget.style.color = "var(--accent)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
         </div>
       </div>
     </section>

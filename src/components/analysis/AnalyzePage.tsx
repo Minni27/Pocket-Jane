@@ -1,77 +1,102 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import CameraCapture from "@/components/camera/CameraCapture";
 import TextInput from "@/components/analysis/TextInput";
 import AnalysisOutput from "@/components/analysis/AnalysisOutput";
+import type { Profile } from "@/types/profile";
 
 type InputMode = "camera" | "text";
 
 export default function AnalyzePage() {
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isLight = !mounted || theme !== "dark";
+
   const [mode, setMode] = useState<InputMode>("camera");
   const [snapshot, setSnapshot] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [context, setContext] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [result, setResult] = useState<null | object>(null);
+  const [result, setResult] = useState<Profile | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   function handleSnapshot(dataUrl: string) {
     setSnapshot(dataUrl);
     setResult(null);
+    setError(null);
   }
 
-  function handleAnalyze() {
+  async function handleAnalyze() {
     if (isAnalyzing) return;
     if (mode === "camera" && !snapshot) return;
     if (mode === "text" && !text.trim()) return;
-    // TODO: wire to /api/analyze
+
     setIsAnalyzing(true);
-    setTimeout(() => {
+    setResult(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: mode === "camera" ? snapshot : undefined,
+          text: mode === "camera"
+            ? (context.trim() || undefined)
+            : (text.trim() || undefined),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Analysis failed.");
+      setResult(data as Profile);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
       setIsAnalyzing(false);
-      setResult({ _placeholder: true });
-    }, 2500);
+    }
   }
 
+  const canAnalyze = mode === "camera" ? !!snapshot : !!text.trim();
+
   return (
-    <div
-      className="flex flex-col flex-1 px-4 py-8 max-w-4xl mx-auto w-full"
-      style={{ gap: "28px" }}
-    >
-      {/* ── Page header ─────────────────────────────────────── */}
+    <div className="flex flex-col flex-1 px-4 py-8 max-w-4xl mx-auto w-full" style={{ gap: "28px" }}>
+
+      {/* Page header */}
       <div>
-        <h1
-          style={{
-            fontFamily: "var(--font-cormorant), serif",
-            fontSize: "clamp(2rem, 5vw, 3rem)",
-            fontWeight: 300,
-            color: "#f0ead8",
-            lineHeight: 1.1,
-            marginBottom: "6px",
-          }}
-        >
+        <h1 style={{
+          fontFamily: "var(--font-playfair), serif",
+          fontSize: "clamp(2rem, 5vw, 3rem)",
+          fontWeight: 600,
+          color: "var(--text-primary)",
+          lineHeight: 1.1,
+          marginBottom: "6px",
+        }}>
           Profile Analysis
         </h1>
-        <p
-          style={{
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "13px",
-            fontWeight: 300,
-            color: "#6e6860",
-            letterSpacing: "0.02em",
-          }}
-        >
+        <p style={{
+          fontFamily: "var(--font-inter), sans-serif",
+          fontSize: "13px",
+          fontWeight: 300,
+          color: "var(--text-muted)",
+          letterSpacing: "0.02em",
+        }}>
           Capture a moment or describe someone. Jane does the rest.
         </p>
       </div>
 
-      {/* ── Mode toggle ─────────────────────────────────────── */}
+      {/* Mode toggle */}
       <div
         className="flex gap-1 p-1 self-start rounded-lg"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
       >
         {(["camera", "text"] as InputMode[]).map((m) => (
           <button
             key={m}
-            onClick={() => { setMode(m); setSnapshot(null); setResult(null); }}
+            onClick={() => { setMode(m); setSnapshot(null); setResult(null); setError(null); }}
             style={{
               padding: "7px 20px",
               borderRadius: "6px",
@@ -83,9 +108,9 @@ export default function AnalyzePage() {
               letterSpacing: "0.06em",
               textTransform: "uppercase",
               transition: "all 0.2s ease",
-              background: mode === m ? "rgba(139,26,48,0.25)" : "transparent",
-              color: mode === m ? "#c9a84c" : "#6e6860",
-              boxShadow: mode === m ? "0 0 12px rgba(139,26,48,0.2)" : "none",
+              background: mode === m ? "var(--raised)" : "transparent",
+              color: mode === m ? "var(--accent)" : "var(--text-muted)",
+              boxShadow: mode === m ? "var(--shadow-card)" : "none",
             }}
           >
             {m === "camera" ? "◎ Camera" : "✦ Describe"}
@@ -93,40 +118,28 @@ export default function AnalyzePage() {
         ))}
       </div>
 
-      {/* ── Input area ──────────────────────────────────────── */}
+      {/* Input area */}
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1">
           {mode === "camera" ? (
-            <CameraCapture
-              onSnapshot={handleSnapshot}
-              snapshot={snapshot}
-            />
+            <CameraCapture onSnapshot={handleSnapshot} snapshot={snapshot} />
           ) : (
             <TextInput value={text} onChange={setText} />
           )}
         </div>
 
-        {/* ── Side panel ──────────────────────────────────── */}
-        <div
-          className="flex flex-col gap-4 lg:w-64"
-        >
-          {/* Snapshot preview in text mode (if previously captured) */}
+        {/* Side panel */}
+        <div className="flex flex-col gap-4 lg:w-64">
           {mode === "text" && snapshot && (
-            <div
-              className="rounded-lg overflow-hidden"
-              style={{ border: "1px solid rgba(168,131,42,0.2)" }}
-            >
+            <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border-gold)" }}>
               <img src={snapshot} alt="Captured" className="w-full object-cover" />
-              <div
-                className="px-3 py-2 flex items-center justify-between"
-                style={{ background: "rgba(168,131,42,0.08)" }}
-              >
-                <span style={{ fontSize: "11px", color: "#a8832a", fontFamily: "var(--font-inter)" }}>
+              <div className="px-3 py-2 flex items-center justify-between" style={{ background: "var(--surface)" }}>
+                <span style={{ fontSize: "11px", color: "var(--gold-dim)", fontFamily: "var(--font-inter)" }}>
                   Snapshot attached
                 </span>
                 <button
                   onClick={() => setSnapshot(null)}
-                  style={{ fontSize: "11px", color: "#6e6860", background: "none", border: "none", cursor: "pointer" }}
+                  style={{ fontSize: "11px", color: "var(--text-muted)", background: "none", border: "none", cursor: "pointer" }}
                 >
                   ✕
                 </button>
@@ -137,25 +150,25 @@ export default function AnalyzePage() {
           {/* Analyze button */}
           <button
             onClick={handleAnalyze}
-            disabled={isAnalyzing || (mode === "camera" ? !snapshot : !text.trim())}
+            disabled={isAnalyzing || !canAnalyze}
             style={{
               width: "100%",
               padding: "16px",
               borderRadius: "8px",
-              border: "1px solid rgba(139,26,48,0.5)",
+              border: "1px solid var(--border-accent)",
               background: isAnalyzing
-                ? "rgba(139,26,48,0.1)"
-                : "linear-gradient(135deg, #8b1a30, #5c0a17)",
-              color: "#f0ead8",
-              fontFamily: "var(--font-cormorant), serif",
+                ? "var(--surface)"
+                : isLight
+                  ? "linear-gradient(135deg, #2d5be3, #0f2060)"
+                  : "linear-gradient(135deg, #b91c1c, #7f1d1d)",
+              color: "var(--text-primary)",
+              fontFamily: "var(--font-playfair), serif",
               fontSize: "20px",
-              fontWeight: 400,
+              fontWeight: 500,
               letterSpacing: "0.04em",
-              cursor: isAnalyzing || (mode === "camera" ? !snapshot : !text.trim())
-                ? "not-allowed"
-                : "pointer",
-              opacity: (mode === "camera" ? !snapshot : !text.trim()) && !isAnalyzing ? 0.4 : 1,
-              boxShadow: isAnalyzing ? "none" : "0 0 24px rgba(139,26,48,0.25)",
+              cursor: isAnalyzing || !canAnalyze ? "not-allowed" : "pointer",
+              opacity: !canAnalyze && !isAnalyzing ? 0.4 : 1,
+              boxShadow: isAnalyzing ? "none" : "var(--shadow-glow)",
               transition: "all 0.2s ease",
               display: "flex",
               alignItems: "center",
@@ -166,38 +179,63 @@ export default function AnalyzePage() {
             {isAnalyzing ? (
               <>
                 <AnalyzingSpinner />
-                <span>Reading…</span>
+                <span style={{ color: isLight ? "#e8f0ff" : "#f0ead8" }}>Reading…</span>
               </>
             ) : (
-              "Analyze"
+              <span style={{ color: isLight ? "#e8f0ff" : "#f0ead8" }}>Analyze</span>
             )}
           </button>
 
-          {/* Context hint */}
-          <div
-            className="rounded-lg p-4"
-            style={{
-              background: "rgba(168,131,42,0.05)",
-              border: "1px solid rgba(168,131,42,0.12)",
-            }}
-          >
-            <p
+          {/* Error */}
+          {error && (
+            <div style={{
+              padding: "12px 14px",
+              borderRadius: "8px",
+              background: "var(--surface)",
+              border: "1px solid var(--border-accent)",
+              color: "var(--accent)",
+              fontFamily: "var(--font-inter), sans-serif",
+              fontSize: "13px",
+              lineHeight: 1.5,
+            }}>
+              {error}
+            </div>
+          )}
+
+          {/* Context textarea */}
+          <div style={{ position: "relative" }}>
+            <div style={{
+              fontFamily: "var(--font-inter), sans-serif",
+              fontSize: "10px", fontWeight: 600,
+              letterSpacing: "0.12em", textTransform: "uppercase",
+              color: "var(--text-muted)", marginBottom: "6px",
+            }}>
+              Context <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: "11px" }}>(optional)</span>
+            </div>
+            <textarea
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              placeholder={"Where you met, what they want, what they said…"}
+              rows={4}
               style={{
-                fontFamily: "var(--font-cormorant), serif",
-                fontSize: "13px",
-                fontStyle: "italic",
-                color: "#6e6860",
-                lineHeight: 1.6,
+                width: "100%", resize: "none",
+                background: "var(--surface)", border: "1px solid var(--border)",
+                borderRadius: "8px", outline: "none",
+                padding: "10px 12px",
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: "13px", fontWeight: 300, lineHeight: 1.65,
+                color: "var(--text-primary)",
+                caretColor: "var(--accent)",
+                transition: "border-color 0.2s ease",
               }}
-            >
-              Add context about the situation — where you met, what they want,
-              what they said. Jane uses it to sharpen the read.
-            </p>
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+            />
           </div>
         </div>
       </div>
 
-      {/* ── Analysis output ─────────────────────────────────── */}
+      {/* Analysis output */}
       {(isAnalyzing || result) && (
         <AnalysisOutput isLoading={isAnalyzing} result={result} />
       )}
@@ -207,26 +245,10 @@ export default function AnalyzePage() {
 
 function AnalyzingSpinner() {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      style={{ animation: "spin 1s linear infinite" }}
-    >
+    <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <circle
-        cx="12" cy="12" r="9"
-        fill="none"
-        stroke="rgba(240,234,216,0.3)"
-        strokeWidth="2"
-      />
-      <path
-        d="M12 3 A9 9 0 0 1 21 12"
-        fill="none"
-        stroke="#f0ead8"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
+      <path d="M12 3 A9 9 0 0 1 21 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }

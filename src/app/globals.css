@@ -173,3 +173,34 @@ html[data-theme="dark"]  ::selection { background: rgba(185,28,28,0.35); color: 
 .delay-300 { animation-delay:.30s; }
 .delay-400 { animation-delay:.40s; }
 .delay-500 { animation-delay:.50s; }
+
+/* ── Print / Save as PDF ────────────────────────────────────── */
+@media print {
+  nav, .no-print { display: none !important; }
+  .print-only    { display: block !important; }
+
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  #profile-print-root {
+    padding: 0;
+    gap: 20px;
+  }
+
+  .card, .card-raised, .card-accent {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .divider-ornate::before,
+  .divider-ornate::after {
+    background: linear-gradient(90deg, transparent, #ccc, transparent) !important;
+  }
+
+  h1, h2, h3, p, span, div {
+    color: #111 !important;
+  }
+}
