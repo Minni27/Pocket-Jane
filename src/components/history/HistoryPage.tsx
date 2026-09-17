@@ -191,9 +191,13 @@ export default function HistoryPage() {
             const date = new Date(row.created_at);
             const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
             const timeStr = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-            const frameworks = (row.methodology as { framework: string }[])
-              .map((m) => m.framework.split("—")[0].trim())
-              .slice(0, 3);
+            // Chips show the author only, so one analysis citing an author
+            // twice would otherwise render duplicates with colliding keys.
+            const frameworks = [...new Set(
+              (row.methodology as { framework: string }[])
+                .map((m) => m.framework.split(/[—–-]/)[0].trim())
+                .filter(Boolean)
+            )].slice(0, 3);
 
             return (
               <div

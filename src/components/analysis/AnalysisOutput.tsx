@@ -120,8 +120,8 @@ function ProfileResult({ profile }: { profile: Profile }) {
             Dominant Traits
           </div>
           <div className="flex flex-col gap-4">
-            {profile.dominantTraits.map((t) => (
-              <div key={t.name}>
+            {profile.dominantTraits.map((t, i) => (
+              <div key={`${i}-${t.name}`}>
                 <div className="flex justify-between mb-2">
                   <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 400, color: "var(--text-dim)" }}>
                     {t.name}
@@ -143,15 +143,15 @@ function ProfileResult({ profile }: { profile: Profile }) {
       <div className="divider-ornate" style={{ marginTop: "4px" }}>◎ Methodology</div>
       <div className="flex flex-col gap-2">
         {profile.methodology.map((m, i) => (
-          <MethodologyCard key={m.framework} step={m} defaultOpen={i === 0} />
+          <MethodologyCard key={`${i}-${m.framework}`} step={m} defaultOpen={i === 0} />
         ))}
       </div>
 
       {/* Persuasion vectors */}
       <div className="divider-ornate" style={{ marginTop: "4px" }}>✦ Persuasion Vectors</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {profile.persuasionAngles.map((p) => (
-          <div key={p.label} className="card p-4" style={{ borderColor: "var(--border-gold)" }}>
+        {profile.persuasionAngles.map((p, i) => (
+          <div key={`${i}-${p.label}`} className="card p-4" style={{ borderColor: "var(--border-gold)" }}>
             <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gold-dim)", marginBottom: "8px" }}>
               {p.label}
             </div>
@@ -204,7 +204,7 @@ function MethodologyCard({ step, defaultOpen }: { step: Profile["methodology"][n
 
       {/* Expandable body */}
       <div style={{
-        maxHeight: open ? "300px" : "0px",
+        maxHeight: open ? "800px" : "0px",
         overflow: "hidden",
         transition: "max-height 0.35s cubic-bezier(0.16,1,0.3,1)",
       }}>

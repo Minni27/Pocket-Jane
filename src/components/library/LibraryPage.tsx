@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
+import { supabase } from "@/lib/supabase";
 
 const suggestedBooks = [
   { author: "Robert Cialdini",  title: "Influence",                 tag: "Persuasion"      },
@@ -14,28 +15,184 @@ const suggestedBooks = [
   { author: "Richard Thaler",   title: "Nudge",                     tag: "Behavioral Econ" },
 ];
 
-type UploadStatus = { name: string; progress: number; status: "processing" | "done" | "error" };
+type UploadStatus = {
+  id: string;
+  name: string;
+  progress: number;
+  status: "queued" | "extracting" | "ingesting" | "done" | "error";
+  detail?: string;
+};
+
+const CHUNK_SIZE   = 1200; // characters per chunk
+const CHUNK_BATCH  = 200;  // chunks per /api/ingest request (keeps payloads ~250KB)
+const CHUNK_OVERLAP = 150;
+
+function chunkText(text: string): string[] {
+  const chunks: string[] = [];
+  let i = 0;
+  while (i < text.length) {
+    const chunk = text.slice(i, i + CHUNK_SIZE).trim();
+    if (chunk.length > 120) chunks.push(chunk);
+    i += CHUNK_SIZE - CHUNK_OVERLAP;
+  }
+  return chunks;
+}
+
+async function extractPdfText(
+  file: File,
+  onProgress: (pct: number) => void
+): Promise<string> {
+  // Dynamically import pdfjs to avoid SSR issues
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc =
+    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+  let fullText = "";
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pageText = content.items.map((item: any) => item.str ?? "").join(" ");
+    fullText += pageText + "\n";
+    onProgress(Math.round((p / pdf.numPages) * 50)); // first 50% = extraction
+  }
+  return fullText;
+}
+
+async function ingestChunks(
+  bookTitle: string,
+  author: string,
+  chunks: string[],
+  onProgress: (pct: number) => void // 50–100%
+): Promise<void> {
+  const totalBatches = Math.ceil(chunks.length / CHUNK_BATCH);
+  for (let b = 0; b < totalBatches; b++) {
+    const batch = chunks.slice(b * CHUNK_BATCH, (b + 1) * CHUNK_BATCH);
+    const res = await fetch("/api/ingest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookTitle, author, chunks: batch }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error ?? "Ingest failed");
+    }
+    onProgress(50 + Math.round(((b + 1) / totalBatches) * 50));
+  }
+}
+
+// "Emotions_Revealed -Paul_Ekman.pdf" → { title: "Emotions Revealed", author: "Paul Ekman" }
+function parseFilename(filename: string): { title: string; author: string } {
+  const clean = (s: string) => s.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
+  const noExt = filename.replace(/\.pdf$/i, "");
+  const parts = noExt.split(/\s*[-–—]\s*/).map(clean).filter(Boolean);
+
+  if (parts.length >= 2) return { title: parts[0], author: parts.slice(1).join(" - ") };
+  return { title: clean(noExt), author: "Unknown" };
+}
+
+type IndexedBook = { book_title: string; author: string; chunk_count: number };
 
 export default function LibraryPage() {
   const [uploads, setUploads] = useState<UploadStatus[]>([]);
+  const [books, setBooks] = useState<IndexedBook[]>([]);
+  const [loadingBooks, setLoadingBooks] = useState(true);
+
+  const pending      = useRef<{ file: File; id: string }[]>([]);
+  const queueRunning = useRef(false);
+  const uploadsRef   = useRef<UploadStatus[]>([]);
+  useEffect(() => { uploadsRef.current = uploads; }, [uploads]);
+
+  const refreshBooks = useCallback(async () => {
+    // library_books is a grouped view — one row per book, so no 1000-row cap issues
+    const { data, error } = await supabase
+      .from("library_books")
+      .select("book_title, author, chunk_count")
+      .order("book_title");
+
+    if (error) {
+      console.error("[library] fetch error:", error.message);
+      setLoadingBooks(false);
+      return;
+    }
+    setBooks((data as IndexedBook[]) ?? []);
+    setLoadingBooks(false);
+  }, []);
+
+  useEffect(() => { refreshBooks(); }, [refreshBooks]);
+
+  async function deleteBook(title: string) {
+    await supabase.from("book_chunks").delete().eq("book_title", title);
+    setBooks((prev) => prev.filter((b) => b.book_title !== title));
+  }
+
+  function setStatus(id: string, patch: Partial<UploadStatus>) {
+    setUploads((prev) => prev.map((u) => u.id === id ? { ...u, ...patch } : u));
+  }
+
+  async function processFile(file: File, id: string) {
+    const name = file.name;
+    try {
+      const { title: bookTitle, author } = parseFilename(name);
+
+      // Replace any existing copy of this book so re-uploads don't duplicate
+      await supabase.from("book_chunks").delete().eq("book_title", bookTitle);
+
+      const fullText = await extractPdfText(file, (pct) =>
+        setStatus(id, { progress: pct, status: "extracting", detail: "Reading pages…" })
+      );
+
+      const chunks = chunkText(fullText);
+      if (chunks.length === 0) throw new Error("No readable text — is this a scanned PDF?");
+      setStatus(id, { progress: 50, status: "ingesting", detail: `${chunks.length} passages` });
+
+      await ingestChunks(bookTitle, author, chunks, (pct) =>
+        setStatus(id, { progress: pct, status: "ingesting", detail: `Storing… ${pct}%` })
+      );
+
+      setStatus(id, { progress: 100, status: "done", detail: `${chunks.length} passages indexed` });
+      refreshBooks();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setStatus(id, { status: "error", detail: msg });
+    }
+  }
+
+  // Files are processed one at a time — extracting 9 PDFs concurrently
+  // exhausts browser memory and locks the tab.
+  async function drainQueue() {
+    if (queueRunning.current) return;
+    queueRunning.current = true;
+    while (pending.current.length > 0) {
+      const next = pending.current.shift()!;
+      await processFile(next.file, next.id);
+    }
+    queueRunning.current = false;
+  }
 
   const onDrop = useCallback((accepted: File[]) => {
     const pdfs = accepted.filter((f) => f.type === "application/pdf");
-    pdfs.forEach((file) => {
-      setUploads((prev) => [...prev, { name: file.name, progress: 0, status: "processing" }]);
-      let p = 0;
-      const interval = setInterval(() => {
-        p += Math.random() * 18 + 5;
-        if (p >= 100) {
-          p = 100;
-          clearInterval(interval);
-          setUploads((prev) => prev.map((u) => u.name === file.name ? { ...u, progress: 100, status: "done" } : u));
-        } else {
-          setUploads((prev) => prev.map((u) => u.name === file.name ? { ...u, progress: Math.floor(p) } : u));
-        }
-      }, 300);
-    });
-  }, []);
+    const fresh: UploadStatus[] = [];
+
+    for (const file of pdfs) {
+      const name = file.name;
+      const alreadyQueued =
+        pending.current.some((p) => p.file.name === name) ||
+        uploadsRef.current.some((u) => u.name === name && u.status !== "error" && u.status !== "done");
+      if (alreadyQueued) continue;
+
+      const id = `${name}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      pending.current.push({ file, id });
+      fresh.push({ id, name, progress: 0, status: "queued", detail: "Waiting…" });
+    }
+
+    if (fresh.length) setUploads((prev) => [...prev, ...fresh]);
+    drainQueue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshBooks]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop, accept: { "application/pdf": [".pdf"] }, multiple: true,
@@ -79,7 +236,7 @@ export default function LibraryPage() {
           {isDragActive ? "Release to ingest" : "Drop your books here"}
         </p>
         <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-ghost)" }}>
-          PDF only · Multiple files accepted · Processed locally in your browser
+          PDF only · Multiple files accepted · Jane will cite these in every reading
         </p>
       </div>
 
@@ -88,30 +245,131 @@ export default function LibraryPage() {
         <div className="flex flex-col gap-3">
           <SectionLabel>Processing Queue</SectionLabel>
           {uploads.map((u) => (
-            <div key={u.name} className="card p-4 flex items-center gap-4" style={{ borderColor: u.status === "done" ? "var(--border-gold)" : u.status === "error" ? "var(--border-accent)" : "var(--border)" }}>
+            <div
+              key={u.id}
+              className="card p-4 flex items-center gap-4"
+              style={{
+                borderColor: u.status === "done"
+                  ? "var(--border-gold)"
+                  : u.status === "error"
+                    ? "var(--border-accent)"
+                    : "var(--border)",
+              }}
+            >
               <div style={{
                 width: "36px", height: "36px", borderRadius: "8px", flexShrink: 0,
-                background: "var(--raised)", border: `1px solid ${u.status === "done" ? "var(--border-gold)" : "var(--border-accent)"}`,
+                background: "var(--raised)",
+                border: `1px solid ${u.status === "done" ? "var(--border-gold)" : "var(--border-accent)"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "14px", color: u.status === "done" ? "var(--gold)" : "var(--accent)",
+                fontSize: "14px",
+                color: u.status === "done" ? "var(--gold)" : u.status === "error" ? "var(--accent)" : "var(--accent)",
               }}>
-                {u.status === "done" ? "✦" : u.status === "error" ? "✕" : "◎"}
+                {u.status === "done" ? "✦" : u.status === "error" ? "✕" : u.status === "queued" ? "◌" : <Spinner />}
               </div>
               <div className="flex-1 min-w-0">
-                <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 400, color: "var(--text-dim)", marginBottom: "6px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {u.name}
-                </p>
-                <div className="rounded-full" style={{ height: "3px", background: "var(--raised)" }}>
-                  <div className="h-full rounded-full" style={{ width: `${u.progress}%`, background: u.status === "done" ? "linear-gradient(90deg, var(--gold-deep), var(--gold))" : "linear-gradient(90deg, var(--accent), var(--accent-bright))", transition: "width 0.3s ease" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", gap: "8px" }}>
+                  <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 400, color: "var(--text-dim)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {u.name}
+                  </p>
+                  <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", color: u.status === "done" ? "var(--gold)" : u.status === "error" ? "var(--accent)" : "var(--text-muted)", flexShrink: 0, whiteSpace: "nowrap" }}>
+                    {u.status === "done" ? "Indexed" : u.status === "error" ? "Failed" : u.status === "queued" ? "Queued" : `${u.progress}%`}
+                  </span>
                 </div>
+                {u.detail && (
+                  <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: u.status === "error" ? "var(--accent)" : "var(--text-ghost)", marginBottom: "6px" }}>
+                    {u.detail}
+                  </p>
+                )}
+                {u.status !== "error" && (
+                  <div className="rounded-full" style={{ height: "3px", background: "var(--raised)" }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${u.progress}%`,
+                        background: u.status === "done"
+                          ? "linear-gradient(90deg, var(--gold-deep), var(--gold))"
+                          : "linear-gradient(90deg, var(--accent), var(--accent-bright))",
+                        transition: "width 0.4s ease",
+                      }}
+                    />
+                  </div>
+                )}
               </div>
-              <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.08em", color: u.status === "done" ? "var(--gold)" : "var(--text-muted)", flexShrink: 0 }}>
-                {u.status === "done" ? "Indexed" : u.status === "error" ? "Failed" : `${u.progress}%`}
-              </span>
             </div>
           ))}
         </div>
       )}
+
+      {/* Indexed books */}
+      <div className="flex flex-col gap-4">
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "12px" }}>
+          <SectionLabel>In Your Library</SectionLabel>
+          {books.length > 0 && (
+            <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: "var(--gold-dim)", flexShrink: 0 }}>
+              {books.length} {books.length === 1 ? "book" : "books"} ·{" "}
+              {books.reduce((s, b) => s + b.chunk_count, 0).toLocaleString()} passages
+            </span>
+          )}
+        </div>
+
+        {loadingBooks ? (
+          <div className="flex flex-col gap-2">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="card p-4" style={{ height: "60px" }}>
+                <div className="shimmer h-3 w-40 rounded mb-2" />
+                <div className="shimmer h-2 w-24 rounded" />
+              </div>
+            ))}
+          </div>
+        ) : books.length === 0 ? (
+          <div className="card p-8 text-center">
+            <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "18px", color: "var(--text-muted)", fontStyle: "italic" }}>
+              Nothing indexed yet.
+            </p>
+            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", color: "var(--text-ghost)", marginTop: "6px" }}>
+              Drop a PDF above and Jane will start citing it.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {books.map((b) => (
+              <div key={b.book_title} className="card p-4 flex items-center gap-4" style={{ borderColor: "var(--border-gold)" }}>
+                <div style={{
+                  width: "34px", height: "42px", borderRadius: "4px", flexShrink: 0,
+                  background: "var(--raised)", border: "1px solid var(--border-gold)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "12px", color: "var(--gold)",
+                }}>
+                  ✦
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "16px", fontWeight: 500, color: "var(--text-primary)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {b.book_title}
+                  </p>
+                  <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: "var(--text-muted)" }}>
+                    {b.author !== "Unknown" ? `${b.author} · ` : ""}{b.chunk_count.toLocaleString()} passages
+                  </p>
+                </div>
+                <button
+                  onClick={() => deleteBook(b.book_title)}
+                  title="Remove from library"
+                  style={{
+                    width: "28px", height: "28px", borderRadius: "6px", flexShrink: 0,
+                    background: "transparent", border: "1px solid var(--border)",
+                    color: "var(--text-ghost)", cursor: "pointer", fontSize: "12px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-ghost)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Suggested reading */}
       <div className="flex flex-col gap-4">
@@ -155,5 +413,15 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>
       {children}
     </p>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
+      <path d="M12 3 A9 9 0 0 1 21 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
   );
 }
