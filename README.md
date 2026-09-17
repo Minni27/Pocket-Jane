@@ -66,16 +66,38 @@ Works on any Next.js host. On Vercel: import the repo, add the three environment
 
 Make sure the Supabase schema has been run against the same project the environment variables point at.
 
-## Auth
+## Auth and tenancy
 
-Email/password via Supabase Auth. Middleware guards every route except `/login` and refreshes the session cookie on each request.
+Every account is its own tenant. Both tables carry a `user_id` defaulting to `auth.uid()`, with RLS policies scoped to the owner, so an account only ever sees its own readings and its own book library. The `library_books` view and the `search_book_chunks()` function are both SECURITY INVOKER, so RLS applies there too — one tenant's search can never reach another's books.
 
-Both tables carry a `user_id` that defaults to `auth.uid()`, with RLS policies scoped to the owner — so each account only ever sees its own readings and its own library. The `library_books` view and the `search_book_chunks()` function both run as SECURITY INVOKER, meaning RLS applies there too and one account's search can't reach another's books.
+Middleware guards every route except `/login` and `/auth/*`, and refreshes the session cookie on each request. API routes are excluded from the redirect and return `401` JSON instead, since redirecting a `fetch()` hands it an HTML page to parse as JSON.
 
-The anon key is public by design and ships in the client bundle; the RLS policies are what actually protect the data.
+The anon key is public by design and ships in the client bundle. The RLS policies are what actually protect the data.
 
-**In Supabase → Authentication → Providers**, make sure Email is enabled. Leaving "Confirm email" on is recommended; the login screen handles the confirm-then-sign-in flow.
+### Making it invite-only
+
+Access is invitation-based: there is no public signup form. This has to be enforced in Supabase, not in the app — anyone holding the anon key can call `supabase.auth.signUp()` directly, so a code check in the UI would be decorative.
+
+**1. Create your own account first**, while signups are still open, then run the migration (below) so your existing data gets claimed.
+
+**2. Turn off public signups.** Supabase → Authentication → Providers → Email → disable **Enable sign ups**.
+
+**3. Point the email links at this app.** Supabase → Authentication → URL Configuration:
+- **Site URL** — your deployed origin, e.g. `https://pocket-jane.vercel.app`
+- **Redirect URLs** — add `https://your-domain/auth/confirm` (and `http://localhost:3000/auth/confirm` for local testing)
+
+**4. Rewrite the invite and recovery email templates.** Supabase → Authentication → Email Templates. The default links go to Supabase's own verify endpoint, which won't reach this app's callback. Replace the link in **Invite user** with:
+
+```
+{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite
+```
+
+and in **Reset password** with the same URL but `type=recovery`.
+
+**5. Invite a tenant.** Supabase → Authentication → Users → **Invite user**. They get an email, land on `/auth/set-password`, choose a password, and start with an empty library of their own.
+
+This works with signups disabled, because an invite is an admin action rather than a registration.
 
 ### Upgrading an existing database
 
-If your tables predate auth and still have the `Allow all for now` policy, run `migrations/001-add-auth.sql` rather than the main schema. It runs in two steps — add the column, sign up, then claim the existing rows — because rows can't be assigned an owner until an account exists.
+If your tables predate auth and still carry the `Allow all for now` policy, run `migrations/001-add-auth.sql` instead of the main schema. It runs in two steps — add the column, create your account, then claim the orphaned rows — because rows can't be assigned an owner until an account exists.

@@ -4,18 +4,15 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-type Mode = "signin" | "signup";
-
 export default function LoginPage() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/";
 
-  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(params.get("error"));
   const [notice, setNotice] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
@@ -24,27 +21,26 @@ export default function LoginPage() {
     setError(null);
     setNotice(null);
 
-    try {
-      if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        // With email confirmation on, there's no session until they verify.
-        if (!data.session) {
-          setNotice("Check your email to confirm your account, then sign in.");
-          setMode("signin");
-          return;
-        }
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      }
-      router.push(next);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setError(error.message);
       setBusy(false);
+      return;
     }
+    router.push(next);
+    router.refresh();
+  }
+
+  async function resetPassword() {
+    if (!email) { setError("Enter your email first, then tap reset."); return; }
+    setBusy(true);
+    setError(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/confirm?type=recovery`,
+    });
+    setBusy(false);
+    if (error) { setError(error.message); return; }
+    setNotice("If that address has an account, a reset link is on its way.");
   }
 
   return (
@@ -69,7 +65,7 @@ export default function LoginPage() {
             Pocket Jane
           </h1>
           <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-muted)" }}>
-            {mode === "signin" ? "Sign in to your readings." : "Create an account to begin."}
+            Sign in to your readings.
           </p>
         </div>
 
@@ -80,8 +76,7 @@ export default function LoginPage() {
           />
           <Field
             label="Password" type="password" value={password} onChange={setPassword}
-            placeholder="••••••••"
-            autoComplete={mode === "signup" ? "new-password" : "current-password"}
+            placeholder="••••••••" autoComplete="current-password"
           />
 
           {error && (
@@ -122,18 +117,21 @@ export default function LoginPage() {
               transition: "all 0.2s ease",
             }}
           >
-            {busy ? "…" : mode === "signin" ? "Sign in" : "Create account"}
+            {busy ? "…" : "Sign in"}
+          </button>
+
+          <button
+            type="button"
+            onClick={resetPassword}
+            disabled={busy}
+            style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", padding: "2px", textAlign: "center" }}
+          >
+            Forgot your password?
           </button>
         </form>
 
-        <p style={{ textAlign: "center", marginTop: "20px", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", color: "var(--text-muted)" }}>
-          {mode === "signin" ? "No account yet?" : "Already have an account?"}{" "}
-          <button
-            onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); setNotice(null); }}
-            style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontFamily: "inherit", fontSize: "12px", fontWeight: 500, padding: 0 }}
-          >
-            {mode === "signin" ? "Create one" : "Sign in"}
-          </button>
+        <p style={{ textAlign: "center", marginTop: "20px", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-ghost)", lineHeight: 1.6 }}>
+          Access is by invitation. If you need an account,<br />ask whoever runs this instance to invite you.
         </p>
       </div>
     </div>
