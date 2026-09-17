@@ -32,6 +32,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [logging, setLogging] = useState<string | null>(null);
+  const [noting, setNoting] = useState<{ id: string; outcome: Outcome } | null>(null);
   const [justSaved, setJustSaved] = useState<string | null>(null);
   const [toast, setToast] = useState<{ label: string; color: string } | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
@@ -62,22 +63,29 @@ export default function HistoryPage() {
     setRows((prev) => prev.filter((r) => r.id !== id));
   }
 
-  async function logOutcome(id: string, outcome: Outcome) {
+  async function logOutcome(id: string, outcome: Outcome, note: string) {
     setLogging(null);
+    setNoting(null);
     setUpdateError(null);
+    const payload = { outcome, outcome_note: note.trim() || null };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await supabase.from("analyses").update({ outcome } as any).eq("id", id);
+    const { error } = await supabase.from("analyses").update(payload as any).eq("id", id);
     if (error) {
       console.error("[history] update error:", error.message);
       setUpdateError(`Failed to save: ${error.message}`);
       return;
     }
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, outcome } : r)));
+    setRows((prev) => prev.map((r) =>
+      r.id === id ? { ...r, outcome, outcome_note: payload.outcome_note } : r
+    ));
     setJustSaved(id);
     setTimeout(() => setJustSaved(null), 2500);
     const labels = { success: "Accurate", partial: "Partial", miss: "Missed" };
     const colors = { success: "var(--gold)", partial: "var(--text-dim)", miss: "var(--accent)" };
-    showToast(`Outcome logged — ${labels[outcome]}`, colors[outcome]);
+    showToast(
+      note.trim() ? `Logged — Jane will learn from this` : `Outcome logged — ${labels[outcome]}`,
+      colors[outcome]
+    );
   }
 
   const total    = rows.length;
@@ -202,11 +210,12 @@ export default function HistoryPage() {
             return (
               <div
                 key={row.id}
-                className="card p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+                className="card p-5"
                 style={{ transition: "border-color 0.2s ease" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-accent)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = ""; }}
               >
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Mode icon */}
                 <Link href={`/history/${row.id}`} style={{ textDecoration: "none", flexShrink: 0 }}>
                   <div style={{
@@ -301,7 +310,7 @@ export default function HistoryPage() {
                   </span>
                 ) : logging === row.id ? (
                   <OutcomePicker
-                    onPick={(o) => logOutcome(row.id, o)}
+                    onPick={(o) => { setLogging(null); setNoting({ id: row.id, outcome: o }); }}
                     onCancel={() => setLogging(null)}
                   />
                 ) : (
@@ -322,10 +331,86 @@ export default function HistoryPage() {
                   </button>
                 )}
               </div>
+
+              {/* Correction note — what Jane actually learns from */}
+              {noting?.id === row.id && (
+                <NoteEditor
+                  outcome={noting.outcome}
+                  onSave={(n) => logOutcome(row.id, noting.outcome, n)}
+                  onCancel={() => setNoting(null)}
+                />
+              )}
+
+              {/* Previously saved correction */}
+              {noting?.id !== row.id && row.outcome_note && (
+                <p style={{
+                  marginTop: "14px", paddingTop: "12px",
+                  borderTop: "1px solid var(--border)",
+                  fontFamily: "var(--font-inter), sans-serif", fontSize: "12px",
+                  fontWeight: 300, lineHeight: 1.6, color: "var(--text-muted)", fontStyle: "italic",
+                }}>
+                  <span style={{ fontStyle: "normal", color: "var(--text-ghost)" }}>Your note: </span>
+                  {row.outcome_note}
+                </p>
+              )}
+              </div>
             );
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+const NOTE_PROMPT: Record<Outcome, { label: string; placeholder: string }> = {
+  success: { label: "What did Jane get right?", placeholder: "Optional — what landed…" },
+  partial: { label: "What did Jane get wrong?", placeholder: "Close on the archetype, but the motive was off — he wasn't ambitious, he was…" },
+  miss:    { label: "What actually happened?",  placeholder: "Wrong read entirely. He wasn't guarded — he'd just had bad news…" },
+};
+
+function NoteEditor({
+  outcome, onSave, onCancel,
+}: { outcome: Outcome; onSave: (note: string) => void; onCancel: () => void }) {
+  const [note, setNote] = useState("");
+  const meta = NOTE_PROMPT[outcome];
+
+  return (
+    <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--border)", animation: "fadeIn 0.2s ease" }}>
+      <label style={{ display: "block", fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "8px" }}>
+        {meta.label}
+        {outcome === "success" && <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: "11px", color: "var(--text-ghost)" }}> (optional)</span>}
+      </label>
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder={meta.placeholder}
+        rows={3}
+        autoFocus
+        style={{
+          width: "100%", resize: "vertical",
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: "8px", outline: "none", padding: "10px 12px",
+          fontFamily: "var(--font-inter), sans-serif",
+          fontSize: "13px", fontWeight: 300, lineHeight: 1.6,
+          color: "var(--text-primary)", caretColor: "var(--accent)",
+        }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+      />
+      <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: "10px" }}>
+        <button
+          onClick={() => onSave(note)}
+          style={{ padding: "6px 18px", borderRadius: "6px", background: "var(--raised)", border: "1px solid var(--border-gold)", color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", cursor: "pointer" }}
+        >Save</button>
+        <button
+          onClick={() => onSave("")}
+          style={{ padding: "6px 12px", borderRadius: "6px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer" }}
+        >Skip</button>
+        <button
+          onClick={onCancel}
+          style={{ fontSize: "11px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "6px 4px" }}
+        >Cancel</button>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,16 @@
 -- Run this in: Supabase Dashboard → SQL Editor → New query
+--
+-- Safe to re-run. If you are upgrading an existing database that predates
+-- auth, see migrations/001-add-auth.sql instead — this file assumes a fresh
+-- project and will not backfill user_id on existing rows.
+
+-- ─── Analyses ─────────────────────────────────────────────────────────────────
 
 create table if not exists analyses (
   id              uuid primary key default gen_random_uuid(),
   created_at      timestamptz default now(),
+  user_id         uuid not null references auth.users(id) on delete cascade
+                    default auth.uid(),
   input_type      text not null check (input_type in ('camera', 'text')),
   input_text      text,
   archetype       text not null,
@@ -16,17 +24,24 @@ create table if not exists analyses (
 );
 
 alter table analyses enable row level security;
-create policy "Allow all for now"
-  on analyses for all
-  using (true)
-  with check (true);
 
--- ─── Library tables ───────────────────────────────────────────────────────────
+drop policy if exists "Allow all for now" on analyses;
+drop policy if exists "Users manage own analyses" on analyses;
+create policy "Users manage own analyses"
+  on analyses for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create index if not exists analyses_user_idx on analyses (user_id, created_at desc);
+
+-- ─── Library ──────────────────────────────────────────────────────────────────
 -- Retrieval uses Postgres full-text search (no embedding API, no quota limits).
 
 create table if not exists book_chunks (
   id          uuid primary key default gen_random_uuid(),
   created_at  timestamptz default now(),
+  user_id     uuid not null references auth.users(id) on delete cascade
+                default auth.uid(),
   book_title  text not null,
   author      text not null,
   chunk_index integer not null,
@@ -34,18 +49,24 @@ create table if not exists book_chunks (
 );
 
 alter table book_chunks enable row level security;
-create policy "Allow all for now"
+
+drop policy if exists "Allow all for now" on book_chunks;
+drop policy if exists "Users manage own book chunks" on book_chunks;
+create policy "Users manage own book chunks"
   on book_chunks for all
-  using (true)
-  with check (true);
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 -- GIN index powering the full-text search at analysis time
 create index if not exists book_chunks_fts_idx
   on book_chunks
   using gin (to_tsvector('english', chunk_text));
 
+create index if not exists book_chunks_user_idx on book_chunks (user_id);
+
 -- One row per book. The Library page reads this instead of raw chunks,
 -- which would otherwise hit PostgREST's 1000-row response cap.
+-- security_invoker makes RLS apply, so each user only sees their own books.
 create or replace view library_books
 with (security_invoker = true) as
 select book_title, author, count(*)::int as chunk_count
@@ -57,6 +78,9 @@ group by book_title, author;
 -- Terms are OR'd together. plainto_tsquery/websearch_to_tsquery AND their
 -- terms, which requires every keyword to appear in one ~1200-char chunk —
 -- that matches nothing once you pass two or three words.
+--
+-- Left as SECURITY INVOKER (the default) so the caller's RLS policy applies
+-- and one user's search can never reach another user's books.
 create or replace function search_book_chunks(
   query_text  text,
   match_count int default 5

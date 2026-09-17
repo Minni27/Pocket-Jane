@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { createSupabaseServerClient } from "@/lib/supabase-server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Tried in order — these models are intermittently overloaded, so fall
 // through to the next rather than failing the whole request.
@@ -128,7 +124,61 @@ function buildSearchQuery(text: string): string {
 // rank. Relevance comes from searching concepts rather than surface words.
 const MIN_RANK = 0.012;
 
-async function fetchRelevantChunks(queryText: string): Promise<string> {
+// Past reads the user marked wrong, fed back so the model can correct course.
+// There is no fine-tuning here — the "learning" is that prior corrections ride
+// along in the prompt, so repeated mistakes get called out before they recur.
+async function fetchCalibration(supabase: SupabaseClient): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from("analyses")
+      .select("archetype, confidence, summary, outcome, outcome_note")
+      .not("outcome", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(40);
+
+    if (error || !data?.length) return "";
+
+    type Row = {
+      archetype: string; confidence: number; summary: string;
+      outcome: "success" | "partial" | "miss"; outcome_note: string | null;
+    };
+    const rows = data as Row[];
+
+    // Corrections the user actually wrote up
+    const corrected = rows
+      .filter((r) => r.outcome !== "success" && r.outcome_note?.trim())
+      .slice(0, 6);
+
+    // Confidence calibration: are the wrong reads also the over-confident ones?
+    const wrong = rows.filter((r) => r.outcome === "miss");
+    const right = rows.filter((r) => r.outcome === "success");
+    let confidenceNote = "";
+    if (wrong.length >= 2 && right.length >= 1) {
+      const avg = (xs: Row[]) => xs.reduce((s, r) => s + r.confidence, 0) / xs.length;
+      const gap = Math.round(avg(wrong) - avg(right));
+      if (gap > 5) {
+        confidenceNote = `\nYour incorrect reads have averaged ${gap} points *higher* confidence than your correct ones — you are most overconfident precisely when you are wrong. Lower your confidence when a read feels effortless.`;
+      }
+    }
+
+    if (!corrected.length && !confidenceNote) return "";
+
+    let section = `\n\n## Calibration — where you have been wrong before\n\nThese are your own past reads on other people, with the user's correction. They are not about the person you are analysing now. Use them to avoid repeating the same class of mistake.\n`;
+
+    for (const r of corrected) {
+      section += `\n- You read them as "${r.archetype}" at ${r.confidence}% confidence. The user marked this ${r.outcome.toUpperCase()} and said: "${r.outcome_note!.trim()}"`;
+    }
+    section += confidenceNote;
+    section += `\n\nBefore committing to a read, check it against these corrections. If you are about to make a similar inference, either find stronger evidence or say something different.`;
+
+    console.log(`[analyze] calibration: ${corrected.length} corrections${confidenceNote ? " + confidence note" : ""}`);
+    return section;
+  } catch {
+    return "";
+  }
+}
+
+async function fetchRelevantChunks(supabase: SupabaseClient, queryText: string): Promise<string> {
   try {
     const keywords = buildSearchQuery(queryText);
     if (!keywords) return "";
@@ -167,6 +217,12 @@ async function fetchRelevantChunks(queryText: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+    }
+
     const { image, text } = await req.json() as { image?: string; text?: string };
 
     if (!image && !text?.trim()) {
@@ -181,10 +237,13 @@ export async function POST(req: NextRequest) {
       || "personality traits behavior patterns psychology persuasion body language";
 
     // Fetch relevant book passages (non-blocking — falls back to empty string on failure)
-    const bookContext = await fetchRelevantChunks(queryText);
+    const [bookContext, calibration] = await Promise.all([
+      fetchRelevantChunks(supabase, queryText),
+      fetchCalibration(supabase),
+    ]);
     if (bookContext) console.log("[analyze] injecting book context, length:", bookContext.length);
 
-    const PROMPT = BASE_PROMPT + bookContext;
+    const PROMPT = BASE_PROMPT + bookContext + calibration;
 
     // Build Gemini REST payload
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -253,6 +312,7 @@ export async function POST(req: NextRequest) {
       persuasion_angles: profile.persuasionAngles ?? [],
       outcome: null,
       outcome_note: null,
+      user_id: user.id,
     }).select("id").single();
 
     if (saveErr) console.error("[analyze] supabase error:", saveErr.message);

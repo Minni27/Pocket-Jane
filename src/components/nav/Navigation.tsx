@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 const links = [
   { href: "/analyze", label: "Analyze" },
@@ -13,9 +14,28 @@ const links = [
 
 export default function Navigation() {
   const pathname  = usePathname();
+  const router    = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) =>
+      setSignedIn(!!session?.user)
+    );
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
+  // The login screen has its own branding and no nav targets
+  if (pathname === "/login") return null;
 
   // Default to light (Jane) until mounted
   const isLight = !mounted || theme === "light";
@@ -95,6 +115,29 @@ export default function Navigation() {
             }}
           >
             {isLight ? <SmileToggle /> : <TeacupToggle />}
+          </button>
+        )}
+
+        {mounted && signedIn && (
+          <button
+            onClick={signOut}
+            title="Sign out"
+            style={{
+              marginLeft: "4px", width: "34px", height: "34px", borderRadius: "8px",
+              background: "transparent",
+              border: `1px solid ${isLight ? "rgba(45,91,227,0.18)" : "rgba(185,28,28,0.20)"}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", transition: "all 0.25s ease", flexShrink: 0,
+              color: "var(--text-muted)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
           </button>
         )}
       </div>

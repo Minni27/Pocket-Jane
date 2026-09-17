@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+    }
+
     const { bookTitle, author, chunks } = await req.json() as {
       bookTitle: string;
       author: string;
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
       author: author || "Unknown",
       chunk_index,
       chunk_text,
+      user_id: user.id,
     }));
 
     const { error } = await supabase.from("book_chunks").insert(rows);

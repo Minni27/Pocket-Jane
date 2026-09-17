@@ -230,8 +230,16 @@ const OUTCOME_OPTIONS: { value: Outcome; label: string; color: string }[] = [
   { value: "miss",    label: "Missed",   color: "var(--accent)"   },
 ];
 
+const NOTE_PROMPT: Record<Outcome, { label: string; placeholder: string }> = {
+  success: { label: "What did Jane get right?",  placeholder: "Optional — what landed, and how you could tell…" },
+  partial: { label: "What did Jane get wrong?",  placeholder: "The archetype was close but the motive was off — he wasn't ambitious, he was scared of…" },
+  miss:    { label: "What actually happened?",   placeholder: "Completely wrong read. He wasn't guarded at all — he'd just had bad news that morning…" },
+};
+
 function OutcomeLogger({ id }: { id: string | null }) {
   const [picking, setPicking] = useState(false);
+  const [noting, setNoting] = useState<Outcome | null>(null);
+  const [note, setNote] = useState("");
   const [saved, setSaved] = useState<Outcome | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -241,18 +249,27 @@ function OutcomeLogger({ id }: { id: string | null }) {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  async function log(outcome: Outcome) {
-    setSaving(true);
+  // Picking an outcome opens the note step; the note is what Jane actually
+  // learns from, so a miss without one teaches nothing.
+  function pick(outcome: Outcome) {
     setPicking(false);
+    setNoting(outcome);
+    setNote("");
+  }
+
+  async function log(outcome: Outcome, outcomeNote: string) {
+    setSaving(true);
+    setNoting(null);
     if (id) {
+      const payload = { outcome, outcome_note: outcomeNote.trim() || null };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from("analyses").update({ outcome } as any).eq("id", id);
+      const { error } = await supabase.from("analyses").update(payload as any).eq("id", id);
       if (error) { showToast("Failed to save — try again"); setSaving(false); return; }
     }
     setSaved(outcome);
     setSaving(false);
     const label = OUTCOME_OPTIONS.find((o) => o.value === outcome)?.label ?? outcome;
-    showToast(`Logged as ${label}`);
+    showToast(outcomeNote.trim() ? `Logged as ${label} — Jane will learn from this` : `Logged as ${label}`);
   }
 
   const savedMeta = saved ? OUTCOME_OPTIONS.find((o) => o.value === saved) : null;
@@ -273,37 +290,96 @@ function OutcomeLogger({ id }: { id: string | null }) {
         </div>
       )}
 
-      <div className="card no-print p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2" style={{ borderColor: "var(--border-soft)" }}>
-        <div>
-          <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "18px", color: "var(--text-primary)", marginBottom: "4px" }}>
-            How did the interaction go?
-          </p>
-          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-muted)" }}>
-            Log the outcome. Jane learns from the gap between prediction and reality.
-          </p>
+      <div className="card no-print p-5 mt-2" style={{ borderColor: "var(--border-soft)" }}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "18px", color: "var(--text-primary)", marginBottom: "4px" }}>
+              How did the interaction go?
+            </p>
+            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-muted)" }}>
+              Log the outcome. Jane learns from the gap between prediction and reality.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+            {savedMeta ? (
+              <span onClick={() => { setSaved(null); setPicking(true); }} title="Click to change" style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", color: savedMeta.color, background: "var(--raised)", border: `1px solid ${savedMeta.color}55`, borderRadius: "8px", padding: "8px 18px", cursor: "pointer", whiteSpace: "nowrap" }}>
+                ✓ {savedMeta.label}
+              </span>
+            ) : noting ? (
+              <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", color: OUTCOME_OPTIONS.find((o) => o.value === noting)!.color, whiteSpace: "nowrap" }}>
+                {OUTCOME_OPTIONS.find((o) => o.value === noting)!.label}
+              </span>
+            ) : picking ? (
+              <>
+                {OUTCOME_OPTIONS.map((o) => (
+                  <button key={o.value} onClick={() => pick(o.value)} disabled={saving} style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", color: o.color, background: "var(--surface)", border: `1px solid ${o.color}55`, borderRadius: "7px", padding: "8px 14px", cursor: "pointer", transition: "all 0.15s ease", whiteSpace: "nowrap" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface)"; }}
+                  >{o.label}</button>
+                ))}
+                <button onClick={() => setPicking(false)} style={{ fontSize: "12px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "8px 4px" }}>✕</button>
+              </>
+            ) : (
+              <button onClick={() => setPicking(true)} style={{ padding: "10px 24px", borderRadius: "8px", background: "transparent", border: "1px solid var(--border-gold)", color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-gold)"; }}
+              >Log Outcome →</button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {savedMeta ? (
-            <span onClick={() => { setSaved(null); setPicking(true); }} title="Click to change" style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", color: savedMeta.color, background: "var(--raised)", border: `1px solid ${savedMeta.color}55`, borderRadius: "8px", padding: "8px 18px", cursor: "pointer", whiteSpace: "nowrap" }}>
-              ✓ {savedMeta.label}
-            </span>
-          ) : picking ? (
-            <>
-              {OUTCOME_OPTIONS.map((o) => (
-                <button key={o.value} onClick={() => log(o.value)} disabled={saving} style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", color: o.color, background: "var(--surface)", border: `1px solid ${o.color}55`, borderRadius: "7px", padding: "8px 14px", cursor: "pointer", transition: "all 0.15s ease", whiteSpace: "nowrap" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface)"; }}
-                >{o.label}</button>
-              ))}
-              <button onClick={() => setPicking(false)} style={{ fontSize: "12px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "8px 4px" }}>✕</button>
-            </>
-          ) : (
-            <button onClick={() => setPicking(true)} style={{ padding: "10px 24px", borderRadius: "8px", background: "transparent", border: "1px solid var(--border-gold)", color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s ease" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-gold)"; }}
-            >Log Outcome →</button>
-          )}
-        </div>
+
+        {/* Correction step — this text is what feeds back into future reads */}
+        {noting && (
+          <div style={{ marginTop: "18px", paddingTop: "18px", borderTop: "1px solid var(--border)", animation: "fadeIn 0.2s ease" }}>
+            <label style={{ display: "block", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "8px" }}>
+              {NOTE_PROMPT[noting].label}
+              {noting === "success" && <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: "11px", color: "var(--text-ghost)" }}> (optional)</span>}
+            </label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={NOTE_PROMPT[noting].placeholder}
+              rows={3}
+              autoFocus
+              style={{
+                width: "100%", resize: "vertical",
+                background: "var(--surface)", border: "1px solid var(--border)",
+                borderRadius: "8px", outline: "none", padding: "10px 12px",
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: "13px", fontWeight: 300, lineHeight: 1.65,
+                color: "var(--text-primary)", caretColor: "var(--accent)",
+                transition: "border-color 0.2s ease",
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+            />
+            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 300, color: "var(--text-ghost)", margin: "8px 0 12px" }}>
+              Be specific about what was wrong — this gets fed into future readings as calibration.
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => log(noting, note)}
+                disabled={saving}
+                style={{ padding: "8px 20px", borderRadius: "7px", background: "var(--raised)", border: "1px solid var(--border-gold)", color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.5 : 1, transition: "all 0.2s ease" }}
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button
+                onClick={() => log(noting, "")}
+                disabled={saving}
+                style={{ padding: "8px 14px", borderRadius: "7px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 400, cursor: "pointer" }}
+              >
+                Skip
+              </button>
+              <button
+                onClick={() => { setNoting(null); setPicking(true); }}
+                style={{ fontSize: "12px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "8px 4px" }}
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
