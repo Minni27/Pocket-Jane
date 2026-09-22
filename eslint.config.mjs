@@ -17,6 +17,9 @@ const eslintConfig = defineConfig([
     // than a CDN. See SECURITY.md.
     "public/pdf.worker.min.mjs",
     "public/sw.js",
+    // Per-machine agent tooling, gitignored and not part of the app.
+    ".claude/**",
+    ".impeccable/**",
   ]),
 ]);
 
