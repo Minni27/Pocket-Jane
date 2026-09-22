@@ -87,6 +87,11 @@ create index if not exists book_chunks_user_idx on book_chunks (user_id);
 -- One row per passage position per book per user. A retried upload batch
 -- would otherwise insert duplicates, inflating storage and letting the same
 -- passage be cited twice in one reading.
+--
+-- On a database that already holds such duplicates this fails with
+-- "could not create unique index". That is pre-existing data, not a problem
+-- with the index: run migrations/002-hardening.sql, which removes the extra
+-- rows first.
 create unique index if not exists book_chunks_unique_position
   on book_chunks (user_id, book_title, chunk_index);
 

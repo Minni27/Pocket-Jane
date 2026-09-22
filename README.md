@@ -59,7 +59,14 @@ Run the whole of `supabase-schema.sql` in the Supabase SQL editor. It creates:
 It also adds the constraints that keep bad data out: confidence must be
 0–100, the jsonb columns must be arrays, passages and notes are length-capped,
 and a unique index stops a retried upload batch inserting the same passage
-twice. An existing database gets these from `migrations/002-hardening.sql`.
+twice.
+
+**An existing database needs `migrations/002-hardening.sql` instead.** As well
+as adding the constraints, it first normalises rows written before those rules
+existed and removes duplicate passages — a database that already holds
+duplicates cannot have the unique index created over it. The SQL editor runs
+the file in one transaction, so a failure leaves nothing half-applied and it
+can be re-run. Section 7 has read-only queries to confirm the result.
 
 ### 4. Run
 
