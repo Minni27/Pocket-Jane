@@ -18,13 +18,18 @@ export default function Navigation() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) =>
-      setSignedIn(!!session?.user)
-    );
+    supabase.auth.getUser().then(({ data }) => {
+      setSignedIn(!!data.user);
+      setIsAdmin(data.user?.app_metadata?.role === "admin");
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setSignedIn(!!session?.user);
+      setIsAdmin(session?.user?.app_metadata?.role === "admin");
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -83,7 +88,7 @@ export default function Navigation() {
       </Link>
 
       <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-        {links.map(({ href, label }) => {
+        {[...links, ...(isAdmin ? [{ href: "/admin", label: "Users" }] : [])].map(({ href, label }) => {
           const active = pathname.startsWith(href);
           return (
             <Link key={href} href={href} style={{
