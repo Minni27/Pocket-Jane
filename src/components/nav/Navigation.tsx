@@ -187,10 +187,10 @@ export default function Navigation() {
       {/* Mobile tab bar. The top bar cannot hold four labels plus two
           buttons at 375px — it overflowed by ~86px once Users appeared. */}
       <nav
-        className="sm:hidden"
+        className="tabbar"
         style={{
           position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50,
-          display: "flex", justifyContent: "space-around", alignItems: "stretch",
+          justifyContent: "space-around", alignItems: "stretch",
           background: navBg,
           backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
           borderTop: `1px solid ${navBorder}`,

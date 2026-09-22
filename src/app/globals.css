@@ -303,3 +303,9 @@ a { text-underline-offset: 0.18em; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* The bottom tab bar is a phone affordance. Display is declared here rather
+   than inline, because an inline value outranks a breakpoint class and the
+   bar rendered over desktop content. */
+.tabbar { display: none; }
+@media (max-width: 639px) { .tabbar { display: flex; } }

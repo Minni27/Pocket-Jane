@@ -17,19 +17,19 @@ export default function OracleHero() {
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start","end end"] });
   const smooth = useSpring(scrollYProgress, { stiffness: 55, damping: 22 });
 
-  const logoOpacity = useTransform(smooth, [0, 0.10, 0.18], [0, 0, 1]);
-  const logoY       = useTransform(smooth, [0, 0.18], [36, 0]);
-  const bloomScale  = useTransform(smooth, [0, 0.45], [0.1, 2.4]);
-  const bloomOp     = useTransform(smooth, [0, 0.10, 0.65, 0.95], [0, 0.75, 0.55, 0]);
-  const readClip    = useTransform(smooth, [0.28, 0.56], ["inset(0 100% 0 0)","inset(0 0% 0 0)"]);
-  const readOp      = useTransform(smooth, [0.26, 0.30], [0, 1]);
-  const line2Op     = useTransform(smooth, [0.52, 0.70], [0, 1]);
-  const line2X      = useTransform(smooth, [0.52, 0.70], [28, 0]);
-  const subOp       = useTransform(smooth, [0.70, 0.86], [0, 1]);
-  const subY        = useTransform(smooth, [0.70, 0.86], [22, 0]);
-  const eyeOp       = useTransform(smooth, [0, 0.05, 0.84, 1], [0, 1, 1, 0]);
+  const logoOpacity = useTransform(smooth, [0, 0.18], [1, 1]);
+  const logoY       = useTransform(smooth, [0, 0.18], [0, 0]);
+  const bloomScale  = useTransform(smooth, [0, 0.45], [1.0, 2.4]);
+  const bloomOp     = useTransform(smooth, [0, 0.65, 0.95], [0.7, 0.55, 0]);
+  const readClip    = useTransform(smooth, [0, 0.12], ["inset(0 0% 0 0)","inset(0 0% 0 0)"]);
+  const readOp      = useTransform(smooth, [0, 0.06], [1, 1]);
+  const line2Op     = useTransform(smooth, [0, 0.08], [1, 1]);
+  const line2X      = useTransform(smooth, [0, 0.08], [0, 0]);
+  const subOp       = useTransform(smooth, [0, 0.10], [1, 1]);
+  const subY        = useTransform(smooth, [0, 0.10], [0, 0]);
+  const eyeOp       = useTransform(smooth, [0, 0.84, 1], [1, 1, 0]);
   const hintOp      = useTransform(smooth, [0, 0.07, 0.18], [1, 1, 0]);
-  const gridOp      = useTransform(smooth, [0, 0.14, 0.72, 1], [0, 0.8, 0.8, 0]);
+  const gridOp      = useTransform(smooth, [0, 0.72, 1], [0.8, 0.8, 0]);
 
   // Jane (light) = blue bloom; Red John (dark) = red bloom
   const bloomBg = isLight
@@ -57,7 +57,7 @@ export default function OracleHero() {
   const ctaColor = isLight ? "#e8f0ff" : "#f0ead8";
 
   return (
-    <div ref={containerRef} style={{ height: "560vh", position: "relative" }}>
+    <div ref={containerRef} style={{ height: "220vh", position: "relative" }}>
       <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
 
         {/* Background */}
