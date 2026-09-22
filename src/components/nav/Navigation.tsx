@@ -7,10 +7,43 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const links = [
-  { href: "/analyze", label: "Analyze" },
-  { href: "/library", label: "Library" },
-  { href: "/history", label: "History" },
+  { href: "/analyze", label: "Analyze", icon: <IconEye /> },
+  { href: "/library", label: "Library", icon: <IconBooks /> },
+  { href: "/history", label: "History", icon: <IconClock /> },
 ];
+const adminLink = { href: "/admin", label: "Users", icon: <IconUsers /> };
+
+function IconEye() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  );
+}
+function IconBooks() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+    </svg>
+  );
+}
+function IconClock() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>
+    </svg>
+  );
+}
+function IconUsers() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 20v-1.5a4 4 0 00-4-4H6a4 4 0 00-4 4V20"/>
+      <circle cx="9" cy="7" r="3.2"/><path d="M22 20v-1.5a4 4 0 00-3-3.85"/>
+    </svg>
+  );
+}
 
 export default function Navigation() {
   const pathname  = usePathname();
@@ -56,6 +89,7 @@ export default function Navigation() {
   const activeBg  = isLight ? "rgba(45,91,227,0.08)"  : "rgba(185,28,28,0.10)";
 
   return (
+    <>
     <nav style={{
       position: "sticky", top: 0, zIndex: 50,
       display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -88,7 +122,8 @@ export default function Navigation() {
       </Link>
 
       <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-        {[...links, ...(isAdmin ? [{ href: "/admin", label: "Users" }] : [])].map(({ href, label }) => {
+        <div className="hidden sm:flex items-center" style={{ gap: "2px" }}>
+        {[...links, ...(isAdmin ? [adminLink] : [])].map(({ href, label }) => {
           const active = pathname.startsWith(href);
           return (
             <Link key={href} href={href} style={{
@@ -106,6 +141,7 @@ export default function Navigation() {
             </Link>
           );
         })}
+        </div>
 
         {mounted && (
           <button
@@ -147,6 +183,47 @@ export default function Navigation() {
         )}
       </div>
     </nav>
+
+      {/* Mobile tab bar. The top bar cannot hold four labels plus two
+          buttons at 375px — it overflowed by ~86px once Users appeared. */}
+      <nav
+        className="sm:hidden"
+        style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50,
+          display: "flex", justifyContent: "space-around", alignItems: "stretch",
+          background: navBg,
+          backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+          borderTop: `1px solid ${navBorder}`,
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+      >
+        {[...links, ...(isAdmin ? [adminLink] : [])].map(({ href, label, icon }) => {
+          const active = pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              style={{
+                flex: 1, display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center", gap: "3px",
+                padding: "9px 0 7px", textDecoration: "none",
+                color: active ? "var(--accent)" : "var(--text-muted)",
+                transition: "color 0.2s ease",
+              }}
+            >
+              {icon}
+              <span style={{
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: "9.5px", fontWeight: 500,
+                letterSpacing: "0.05em", textTransform: "uppercase",
+              }}>
+                {label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+    </>
   );
 }
 

@@ -204,3 +204,21 @@ html[data-theme="dark"]  ::selection { background: rgba(185,28,28,0.35); color: 
     color: #111 !important;
   }
 }
+
+
+/* ─── Mobile shell ──────────────────────────────────────────────
+   A fixed tab bar sits over the last ~64px of the page on phones,
+   so content needs clearance or the final control is unreachable. */
+@media (max-width: 639px) {
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
+/* No layout should be able to scroll the page sideways. Decorative
+   blobs are wider than the viewport by design and are clipped by
+   their parents; this is the backstop for anything that is not. */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}

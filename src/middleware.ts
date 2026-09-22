@@ -62,7 +62,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Everything except static assets and image files
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Everything except static assets, images, and the PWA files.
+    // The manifest and service worker are fetched before anyone signs in —
+    // redirecting them to /login hands the browser an HTML page where it
+    // expects JSON/JS, and the install prompt never appears.
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

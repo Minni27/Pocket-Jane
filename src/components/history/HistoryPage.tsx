@@ -137,9 +137,9 @@ export default function HistoryPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Total Analyses",  value: total || "—"             },
-          { label: "Avg Confidence",  value: total ? `${avgConf}%` : "—" },
-          { label: "Outcomes Logged", value: total ? `${logged}/${total}` : "—" },
+          { label: "Total",      full: "Total Analyses",  value: total || "—"                },
+          { label: "Confidence", full: "Avg Confidence",  value: total ? `${avgConf}%` : "—"  },
+          { label: "Logged",     full: "Outcomes Logged", value: total ? `${logged}/${total}` : "—" },
         ].map((s) => (
           <div key={s.label} className="card p-4 text-center">
             <div style={{
@@ -155,7 +155,8 @@ export default function HistoryPage() {
               letterSpacing: "0.1em", textTransform: "uppercase",
               color: "var(--text-ghost)",
             }}>
-              {s.label}
+              <span className="sm:hidden">{s.label}</span>
+              <span className="hidden sm:inline">{s.full}</span>
             </div>
           </div>
         ))}
