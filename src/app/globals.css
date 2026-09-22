@@ -326,3 +326,17 @@ a { text-underline-offset: 0.18em; }
     opacity: 0.8;
   }
 }
+
+/* The hero's copy is revealed by scroll position, so at the top of the page
+   it is deliberately at zero opacity. For someone who prefers reduced
+   motion that means arriving at a blank hero and only finding the words by
+   scrolling through a sequence built to be watched. The copy is shown
+   outright instead; the reveal is what goes, not the content. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-copy > *,
+  .hero-copy h1 {
+    opacity: 1 !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+  }
+}

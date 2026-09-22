@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
+import { SECTION_VH } from "./scrollMap";
 import { useTheme } from "next-themes";
 
 const features = [
@@ -63,14 +64,34 @@ export default function FeaturesSection() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const isLight = !mounted || theme !== "dark";
+  const sectionRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
+
+  // Scroll is the primary control: while the section is pinned, progress
+  // through it advances the case. The arrows and dots still work — they
+  // scroll to the matching offset rather than fighting the scroll position,
+  // so the two controls can never disagree.
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
+  const caseIndex = useTransform(scrollYProgress, [0.06, 0.94], [0, features.length - 0.01]);
+
+  useMotionValueEvent(caseIndex, "change", (v) => {
+    const i = Math.max(0, Math.min(features.length - 1, Math.floor(v)));
+    setActive((prev) => { if (prev !== i) setDirection(i > prev ? 1 : -1); return i; });
+  });
+
+  function scrollToCase(i: number) {
+    const el = sectionRef.current;
+    if (!el) return;
+    const span = el.offsetHeight - window.innerHeight;
+    const frac = 0.06 + ((i + 0.5) / features.length) * 0.88;
+    window.scrollTo({ top: el.offsetTop + span * frac, behavior: "smooth" });
+  }
   const inView = useInView(headingRef, { once: true, margin: "-80px" });
   const [active, setActive] = useState(0);
   const [direction, setDirection] = useState(1);
 
   function go(next: number) {
-    setDirection(next > active ? 1 : -1);
-    setActive(next);
+    scrollToCase(next);
   }
 
   function prev() {
@@ -85,7 +106,8 @@ export default function FeaturesSection() {
   const accentRgbDark  = "185,28,28";
 
   return (
-    <section style={{ padding: "120px 24px 100px", maxWidth: "960px", margin: "0 auto", width: "100%" }}>
+    <div ref={sectionRef} style={{ height: `${SECTION_VH.features}vh`, position: "relative" }}>
+    <section style={{ position: "sticky", top: 0, minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "var(--s-6) 24px", maxWidth: "960px", margin: "0 auto", width: "100%" }}>
 
       {/* Section heading */}
       <div ref={headingRef} style={{ marginBottom: "64px", textAlign: "center" }}>
@@ -180,6 +202,7 @@ export default function FeaturesSection() {
         </div>
       </div>
     </section>
+    </div>
   );
 }
 

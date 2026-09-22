@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { SECTION_VH } from "./scrollMap";
 import { Mark } from "@/components/ui";
 
 // Illustrative readings, not customer data — they exist to show that the
@@ -17,14 +18,27 @@ const SPECIMENS = [
 export default function SignatureSection() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  // Each specimen draws in turn across the pin, so the claim above builds
+  // rather than arriving finished.
+  const headingOp = useTransform(scrollYProgress, [0, 0.12], [0, 1]);
+
+  // Hoisted rather than called inside the map: a hook in a loop only works
+  // by accident of a fixed array length.
+  const d0 = useTransform(scrollYProgress, [0.18, 0.42], [0, 1]);
+  const d1 = useTransform(scrollYProgress, [0.34, 0.58], [0, 1]);
+  const d2 = useTransform(scrollYProgress, [0.50, 0.74], [0, 1]);
+  const d3 = useTransform(scrollYProgress, [0.66, 0.90], [0, 1]);
+  const draws = [d0, d1, d2, d3];
 
   return (
-    <section ref={ref} style={{ padding: "var(--s-6) 24px 100px", maxWidth: "960px", margin: "0 auto", width: "100%" }}>
+    <div ref={ref} style={{ height: `${SECTION_VH.signature}vh`, position: "relative" }}>
+    <section style={{ position: "sticky", top: 0, minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "var(--s-6) 24px", maxWidth: "960px", margin: "0 auto", width: "100%" }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        style={{ textAlign: "center", marginBottom: "var(--s-6)" }}
+style={{ textAlign: "center", marginBottom: "var(--s-6)", opacity: headingOp }}
       >
         <h2 style={{
           fontFamily: "var(--font-playfair), serif",
@@ -65,6 +79,7 @@ export default function SignatureSection() {
                 confidence={s.confidence}
                 size={132}
                 animate={inView}
+                drawProgress={draws[i]}
               />
             </div>
             <figcaption>
@@ -86,5 +101,6 @@ export default function SignatureSection() {
         ))}
       </div>
     </section>
+    </div>
   );
 }

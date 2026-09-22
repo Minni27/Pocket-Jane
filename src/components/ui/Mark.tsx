@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import { motion, type MotionValue } from "framer-motion";
 import { seedFrom, markPath } from "@/lib/seed";
 
 interface Props {
@@ -12,10 +13,12 @@ interface Props {
   animate?: boolean;
   /** Awaiting its contour: outcome not yet logged */
   hollow?: boolean;
+  /** Scroll-driven draw, 0 to 1. Overrides `animate` when supplied. */
+  drawProgress?: MotionValue<number>;
 }
 
 export default function Mark({
-  archetype, traits, confidence, size = 120, animate = false, hollow = false,
+  archetype, traits, confidence, size = 120, animate = false, hollow = false, drawProgress,
 }: Props) {
   const uid = useId().replace(/:/g, "");
   const s = seedFrom(archetype, traits, confidence);
@@ -53,6 +56,13 @@ export default function Mark({
         } : undefined}
       />
 
+      {drawProgress ? (
+        <motion.path
+          d={outer} fill="none" stroke="var(--mark)"
+          strokeWidth={size > 64 ? 1.5 : 1.25} strokeLinejoin="round"
+          style={{ pathLength: drawProgress }}
+        />
+      ) : (
       <path
         d={outer}
         fill="none"
@@ -65,6 +75,7 @@ export default function Mark({
           animation: `mark-draw var(--dur-mark) var(--ease-out) ${s.delay}ms both`,
         } : undefined}
       />
+      )}
 
       {/* Confidence sits inside the traits it was drawn from */}
       <path

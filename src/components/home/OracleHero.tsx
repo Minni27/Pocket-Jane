@@ -73,7 +73,7 @@ export default function OracleHero() {
           position: "absolute", inset: 0,
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center", padding: "0 24px",
-        }}>
+        }} className="hero-copy">
           {/* Oracle symbol */}
           <motion.div style={{ opacity: eyeOp, marginBottom: "28px" }}>
             <OracleSymbol isLight={isLight} smooth={smooth} />

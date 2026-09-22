@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { SECTION_VH } from "./scrollMap";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 
@@ -14,13 +15,13 @@ export default function ClosingCTA() {
   const isDark = mounted && theme === "dark";
 
   return (
+    <div ref={ref} style={{ height: `${SECTION_VH.closing}vh`, position: "relative" }}>
     <section
-      ref={ref}
       style={{
-        padding: "80px 24px 140px",
+        position: "sticky", top: 0, minHeight: "100vh", justifyContent: "center",
+        padding: "var(--s-6) 24px",
         display: "flex", flexDirection: "column",
         alignItems: "center", textAlign: "center",
-        position: "relative", overflow: "hidden",
       }}
     >
       {/* Bloom */}
@@ -123,5 +124,6 @@ export default function ClosingCTA() {
         </Link>
       </motion.div>
     </section>
+    </div>
   );
 }
