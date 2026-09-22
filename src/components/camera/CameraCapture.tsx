@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 
 interface Props {
@@ -12,6 +12,30 @@ export default function CameraCapture({ onSnapshot, snapshot }: Props) {
   const webcamRef = useRef<Webcam>(null);
   const [cameraError, setCameraError] = useState(false);
   const [isLive, setIsLive] = useState(false);
+
+  // Point at the subject, not at yourself. Phones get the rear camera;
+  // laptops only have a front one, so they keep it.
+  const [facing, setFacing] = useState<"user" | "environment">(
+    typeof navigator !== "undefined" &&
+    /iphone|ipad|android|mobile/i.test(navigator.userAgent)
+      ? "environment"
+      : "user"
+  );
+  const [hasMultiple, setHasMultiple] = useState(false);
+
+  useEffect(() => {
+    // enumerateDevices only labels cameras after permission is granted, so
+    // count them once the stream is live rather than on mount.
+    if (!isLive || !navigator.mediaDevices?.enumerateDevices) return;
+    navigator.mediaDevices.enumerateDevices()
+      .then((d) => setHasMultiple(d.filter((x) => x.kind === "videoinput").length > 1))
+      .catch(() => {});
+  }, [isLive]);
+
+  const flip = useCallback(() => {
+    setIsLive(false); // stream restarts on constraint change
+    setFacing((f) => (f === "user" ? "environment" : "user"));
+  }, []);
 
   const capture = useCallback(() => {
     const dataUrl = webcamRef.current?.getScreenshot();
@@ -54,9 +78,18 @@ export default function CameraCapture({ onSnapshot, snapshot }: Props) {
             audio={false}
             screenshotFormat="image/jpeg"
             screenshotQuality={0.85}
-            videoConstraints={{ width: 640, height: 480, facingMode: "user" }}
+            videoConstraints={{
+              width:  { ideal: 1280, max: 1920 },
+              height: { ideal: 960,  max: 1440 },
+              facingMode: facing,
+            }}
             onUserMedia={() => setIsLive(true)}
-            onUserMediaError={() => setCameraError(true)}
+            onUserMediaError={() => {
+              // A device with no rear camera rejects facingMode:"environment";
+              // drop back to the front one instead of showing an error.
+              if (facing === "environment") { setFacing("user"); return; }
+              setCameraError(true);
+            }}
             className="w-full h-full object-cover"
           />
 
@@ -65,6 +98,27 @@ export default function CameraCapture({ onSnapshot, snapshot }: Props) {
           )}
 
           <CornerBrackets />
+
+          {hasMultiple && (
+            <button
+              onClick={flip}
+              title={facing === "environment" ? "Switch to front camera" : "Switch to rear camera"}
+              className="absolute top-3 right-3 rounded-md"
+              style={{
+                width: "34px", height: "34px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(0,0,0,0.7)", border: "1px solid var(--border-accent)",
+                color: "var(--text-dim)", cursor: "pointer", padding: 0,
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H7a2 2 0 00-2 2v9"/>
+                <polyline points="8 1 11 4 8 7"/>
+                <path d="M13 20h4a2 2 0 002-2V9"/>
+                <polyline points="16 23 13 20 16 17"/>
+              </svg>
+            </button>
+          )}
 
           {isLive && (
             <div className="absolute top-3 left-3 flex items-center gap-2 rounded-md px-3 py-1.5" style={{ background: "rgba(0,0,0,0.7)", border: "1px solid var(--border-accent)" }}>
