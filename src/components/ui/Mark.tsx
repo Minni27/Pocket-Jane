@@ -20,8 +20,8 @@ export default function Mark({
   const uid = useId().replace(/:/g, "");
   const s = seedFrom(archetype, traits, confidence);
 
-  const outer = markPath(s.radii, s.rotation, size);
-  const inner = markPath(s.radii.map(() => s.inner), s.rotation, size);
+  const outer = markPath(s.radii, s.rotation, size, s.tension);
+  const inner = markPath(s.radii.map(() => s.inner), s.rotation, size, s.tension);
 
   // Overshoot of the true path length; dashoffset only needs to exceed it
   const len = size * 3.4;

@@ -19,6 +19,8 @@ export type Seeded = {
   radii: number[];
   /** Normalised radius of the inner confidence contour */
   inner: number;
+  /** Control-point weight: ~0 draws a faceted polygon, ~0.3 a soft lobed form */
+  tension: number;
 };
 
 // FNV-1a. Small, fast, and stable across runs — the mark must not change
@@ -58,6 +60,14 @@ export function seedFrom(
     delay: (h >>> 16) % 120,
     radii,
     inner: norm(confidence) * 0.55,
+    // Radius and rotation alone keep every mark inside one rounded family.
+    // Tension is what makes some crystalline and others soft, which is the
+    // difference between distinguishable side by side and recognisable at
+    // a glance. Floor is above zero so a shape never degenerates to a spike.
+    // Re-hashed rather than sliced from h: the high bits correlate with the
+    // ones rotation already uses, and six archetypes landed within 0.02 of
+    // each other. An independent digest spreads the range properly.
+    tension: 0.02 + (hash(archetype + "~tension") % 1000) / 1000 * 0.26,
   };
 }
 
@@ -66,7 +76,12 @@ export function seedFrom(
  * A polygon through the same points would read as a radar chart — a diagram
  * that restates numbers already written beside it. The curve reads as a mark.
  */
-export function markPath(radii: number[], rotation: number, size: number): string {
+export function markPath(
+  radii: number[],
+  rotation: number,
+  size: number,
+  tension = 1 / 6
+): string {
   const c = size / 2;
   const r = size / 2 - 2;
   const n = radii.length;
@@ -81,10 +96,10 @@ export function markPath(radii: number[], rotation: number, size: number): strin
   for (let i = 0; i < n; i++) {
     const p0 = pt(i - 1), p1 = pt(i), p2 = pt(i + 1), p3 = pt(i + 2);
     if (i === 0) d += `M${p1[0].toFixed(2)},${p1[1].toFixed(2)}`;
-    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
-    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
-    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
-    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    const c1x = p1[0] + (p2[0] - p0[0]) * tension;
+    const c1y = p1[1] + (p2[1] - p0[1]) * tension;
+    const c2x = p2[0] - (p3[0] - p1[0]) * tension;
+    const c2y = p2[1] - (p3[1] - p1[1]) * tension;
     d += `C${c1x.toFixed(2)},${c1y.toFixed(2)} ${c2x.toFixed(2)},${c2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
   }
   return d + "Z";
