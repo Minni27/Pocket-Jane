@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Icon } from "@/components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -50,12 +51,12 @@ export default function LoginPage() {
         <div style={{ textAlign: "center", marginBottom: "36px" }}>
           <div style={{
             width: "52px", height: "52px", borderRadius: "50%", margin: "0 auto 20px",
-            background: "linear-gradient(135deg, var(--accent), var(--accent-deep, var(--accent)))",
+            background: "linear-gradient(135deg, var(--accent), var(--accent-deep))",
             boxShadow: "var(--shadow-glow)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "20px", color: "#fff",
+            color: "#fff",
           }}>
-            ◈
+            <Icon name="eye" size={22} />
           </div>
           <h1 style={{
             fontFamily: "var(--font-playfair), serif",
@@ -93,8 +94,8 @@ export default function LoginPage() {
           {notice && (
             <p style={{
               fontFamily: "var(--font-inter), sans-serif", fontSize: "12px",
-              color: "var(--gold)", lineHeight: 1.5,
-              background: "var(--raised)", border: "1px solid var(--border-gold)",
+              color: "var(--signal)", lineHeight: 1.5,
+              background: "var(--raised)", border: "1px solid var(--border)",
               borderRadius: "8px", padding: "10px 12px", margin: 0,
             }}>
               {notice}
@@ -107,7 +108,7 @@ export default function LoginPage() {
             style={{
               marginTop: "4px", padding: "13px", borderRadius: "8px",
               border: "1px solid var(--border-accent)",
-              background: "linear-gradient(135deg, var(--accent), var(--accent-deep, var(--accent)))",
+              background: "linear-gradient(135deg, var(--accent), var(--accent-deep))",
               color: "#fff",
               fontFamily: "var(--font-playfair), serif",
               fontSize: "17px", fontWeight: 500, letterSpacing: "0.03em",

@@ -33,7 +33,7 @@ function rowToProfile(row: RawRow): Profile {
     summary: row.summary,
     dominantTraits: row.dominant_traits ?? [],
     methodology: (row.methodology ?? []).map((m) => ({
-      icon: m.icon ?? "◈",
+      icon: m.icon ?? "",
       framework: m.framework ?? "",
       observation: m.observation ?? "",
       inference: m.inference ?? "",
@@ -65,7 +65,7 @@ export default function ProfileDetailPage({ id }: { id: string }) {
           setMeta({
             date: d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) +
               " · " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-            inputType: row.input_type === "camera" ? "◎ Camera" : "✦ Describe",
+            inputType: row.input_type === "camera" ? "Camera" : "Described",
           });
         }
         setLoading(false);

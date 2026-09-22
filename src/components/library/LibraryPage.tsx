@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { supabase } from "@/lib/supabase";
+import { Icon } from "@/components/ui";
 
 type UploadStatus = {
   id: string;
@@ -251,7 +252,7 @@ export default function LibraryPage() {
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: "22px", color: "var(--accent)", transition: "all 0.25s ease",
         }}>
-          {isDragActive ? "⊕" : "◈"}
+          <Icon name={isDragActive ? "plus" : "books"} size={24} />
         </div>
         <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "22px", fontWeight: 500, color: isDragActive ? "var(--text-primary)" : "var(--text-dim)", marginBottom: "6px", transition: "color 0.25s ease" }}>
           {isDragActive ? "Release to ingest" : "Drop your books here"}
@@ -271,7 +272,7 @@ export default function LibraryPage() {
               className="card p-4 flex items-center gap-4"
               style={{
                 borderColor: u.status === "done"
-                  ? "var(--border-gold)"
+                  ? "var(--border)"
                   : u.status === "error"
                     ? "var(--border-accent)"
                     : "var(--border)",
@@ -280,19 +281,19 @@ export default function LibraryPage() {
               <div style={{
                 width: "36px", height: "36px", borderRadius: "8px", flexShrink: 0,
                 background: "var(--raised)",
-                border: `1px solid ${u.status === "done" ? "var(--border-gold)" : "var(--border-accent)"}`,
+                border: `1px solid ${u.status === "done" ? "var(--border)" : "var(--border-accent)"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: "14px",
-                color: u.status === "done" ? "var(--gold)" : u.status === "error" ? "var(--accent)" : "var(--accent)",
+                color: u.status === "done" ? "var(--signal)" : u.status === "error" ? "var(--accent)" : "var(--accent)",
               }}>
-                {u.status === "done" ? "✦" : u.status === "error" ? "✕" : u.status === "queued" ? "◌" : <Spinner />}
+                {u.status === "done" ? <Icon name="check" size={15}/> : u.status === "error" ? <Icon name="alert" size={15}/> : u.status === "queued" ? <Icon name="clock" size={15}/> : <Spinner />}
               </div>
               <div className="flex-1 min-w-0">
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", gap: "8px" }}>
                   <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 400, color: "var(--text-dim)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {u.name}
                   </p>
-                  <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", color: u.status === "done" ? "var(--gold)" : u.status === "error" ? "var(--accent)" : "var(--text-muted)", flexShrink: 0, whiteSpace: "nowrap" }}>
+                  <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", color: u.status === "done" ? "var(--signal)" : u.status === "error" ? "var(--accent)" : "var(--text-muted)", flexShrink: 0, whiteSpace: "nowrap" }}>
                     {u.status === "done" ? "Indexed" : u.status === "error" ? "Failed" : u.status === "queued" ? "Queued" : `${u.progress}%`}
                   </span>
                 </div>
@@ -308,7 +309,7 @@ export default function LibraryPage() {
                       style={{
                         width: `${u.progress}%`,
                         background: u.status === "done"
-                          ? "linear-gradient(90deg, var(--gold-deep), var(--gold))"
+                          ? "linear-gradient(90deg, var(--accent-deep), var(--signal))"
                           : "linear-gradient(90deg, var(--accent), var(--accent-bright))",
                         transition: "width 0.4s ease",
                       }}
@@ -326,7 +327,7 @@ export default function LibraryPage() {
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "12px" }}>
           <SectionLabel>In Your Library</SectionLabel>
           {books.length > 0 && (
-            <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: books.length >= MAX_BOOKS ? "var(--accent)" : "var(--gold-dim)", flexShrink: 0 }}>
+            <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: books.length >= MAX_BOOKS ? "var(--accent)" : "var(--text-muted)", flexShrink: 0 }}>
               {books.length} of {MAX_BOOKS} books ·{" "}
               {books.reduce((s, b) => s + b.chunk_count, 0).toLocaleString()} passages
             </span>
@@ -354,14 +355,14 @@ export default function LibraryPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {books.map((b) => (
-              <div key={b.book_title} className="card p-4 flex items-center gap-4" style={{ borderColor: "var(--border-gold)" }}>
+              <div key={b.book_title} className="card p-4 flex items-center gap-4" style={{ borderColor: "var(--border)" }}>
                 <div style={{
                   width: "34px", height: "42px", borderRadius: "4px", flexShrink: 0,
-                  background: "var(--raised)", border: "1px solid var(--border-gold)",
+                  background: "var(--raised)", border: "1px solid var(--border)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "12px", color: "var(--gold)",
+                  fontSize: "12px", color: "var(--signal)",
                 }}>
-                  ✦
+                  <Icon name="books" size={14} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "16px", fontWeight: 500, color: "var(--text-primary)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -384,7 +385,7 @@ export default function LibraryPage() {
                   onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-ghost)"; e.currentTarget.style.borderColor = "var(--border)"; }}
                 >
-                  ✕
+                  <Icon name="trash" size={14} />
                 </button>
               </div>
             ))}

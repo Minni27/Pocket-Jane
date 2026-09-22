@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
+import { Icon } from "@/components/ui";
 
 interface Props {
   onSnapshot: (dataUrl: string) => void;
@@ -155,7 +156,7 @@ export default function CameraCapture({ onSnapshot, snapshot }: Props) {
 function CameraError() {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-      <span style={{ fontSize: "32px", opacity: 0.3, color: "var(--text-muted)" }}>◎</span>
+      <Icon name="camera" size={30} style={{ opacity: 0.35, color: "var(--text-muted)" }} />
       <p style={{ fontFamily: "var(--font-inter)", fontSize: "13px", color: "var(--text-muted)", textAlign: "center", maxWidth: "200px" }}>
         Camera access denied. Use the <strong style={{ color: "var(--accent)" }}>Describe</strong> mode instead.
       </p>

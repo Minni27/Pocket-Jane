@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Icon } from "@/components/ui";
 
 type AdminUser = {
   id: string;
@@ -43,10 +44,10 @@ export default function AdminPage() {
         <div style={{
           position: "fixed", bottom: "32px", left: "50%", transform: "translateX(-50%)",
           zIndex: 999, padding: "14px 28px", borderRadius: "10px",
-          background: "var(--surface)", border: "1px solid var(--border-gold)",
+          background: "var(--surface)", border: "1px solid var(--border)",
           boxShadow: "0 0 32px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", gap: "10px",
         }}>
-          <span style={{ fontSize: "15px", color: "var(--gold)" }}>✓</span>
+          <Icon name="check" size={15} style={{ color: "var(--signal)" }} />
           <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "14px", color: "var(--text-primary)" }}>{toast}</span>
         </div>
       )}
@@ -81,8 +82,8 @@ export default function AdminPage() {
             onClick={() => setAdding(true)}
             style={{
               alignSelf: "flex-start", padding: "10px 22px", borderRadius: "8px",
-              background: "transparent", border: "1px solid var(--border-gold)",
-              color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif",
+              background: "transparent", border: "1px solid var(--border)",
+              color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif",
               fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em",
               textTransform: "uppercase", cursor: "pointer", transition: "all 0.2s ease",
             }}
@@ -193,7 +194,7 @@ function AddUserForm({ onDone }: { onDone: (msg?: string) => void }) {
 
       <div className="flex gap-2 flex-wrap">
         <button type="submit" disabled={busy || !email || !password}
-          style={{ padding: "9px 22px", borderRadius: "8px", background: "var(--raised)", border: "1px solid var(--border-gold)", color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", cursor: busy ? "not-allowed" : "pointer", opacity: busy || !email || !password ? 0.5 : 1 }}
+          style={{ padding: "9px 22px", borderRadius: "8px", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", cursor: busy ? "not-allowed" : "pointer", opacity: busy || !email || !password ? 0.5 : 1 }}
         >{busy ? "Creating…" : "Create user"}</button>
         <button type="button" onClick={() => onDone()}
           style={{ padding: "9px 14px", borderRadius: "8px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", cursor: "pointer" }}
@@ -233,15 +234,15 @@ function UserRow({ user, onChanged }: { user: AdminUser; onChanged: (msg: string
   const isAdmin = user.role === "admin";
 
   return (
-    <div className="card p-4" style={{ borderColor: isAdmin ? "var(--border-gold)" : undefined }}>
+    <div className="card p-4" style={{ borderColor: isAdmin ? "var(--border)" : undefined }}>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div style={{
           width: "34px", height: "34px", borderRadius: "8px", flexShrink: 0,
-          background: "var(--raised)", border: `1px solid ${isAdmin ? "var(--border-gold)" : "var(--border)"}`,
+          background: "var(--raised)", border: `1px solid ${isAdmin ? "var(--border)" : "var(--border)"}`,
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "13px", color: isAdmin ? "var(--gold)" : "var(--text-muted)",
+          fontSize: "13px", color: isAdmin ? "var(--signal)" : "var(--text-muted)",
         }}>
-          {isAdmin ? "◈" : "◎"}
+          <Icon name={isAdmin ? "users" : "eye"} size={15} />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -279,7 +280,7 @@ function UserRow({ user, onChanged }: { user: AdminUser; onChanged: (msg: string
             style={{ flex: 1, minWidth: "200px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "7px", outline: "none", padding: "8px 11px", fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", color: "var(--text-primary)" }}
           />
           <button onClick={savePassword} disabled={busy || newPw.length < 8}
-            style={{ padding: "8px 16px", borderRadius: "7px", background: "var(--raised)", border: "1px solid var(--border-gold)", color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer", opacity: newPw.length < 8 ? 0.5 : 1 }}
+            style={{ padding: "8px 16px", borderRadius: "7px", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer", opacity: newPw.length < 8 ? 0.5 : 1 }}
           >Save</button>
           <button onClick={() => { setResetting(false); setNewPw(""); }}
             style={{ padding: "8px 12px", borderRadius: "7px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer" }}

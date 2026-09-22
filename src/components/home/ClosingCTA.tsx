@@ -73,7 +73,7 @@ export default function ClosingCTA() {
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: "11px", fontWeight: 500,
           letterSpacing: "0.14em", textTransform: "uppercase",
-          color: "var(--gold-dim)",
+          color: "var(--text-muted)",
           marginTop: "18px",
         }}>
           — Patrick Jane

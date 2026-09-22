@@ -122,7 +122,7 @@ export default function AnalyzePage() {
               boxShadow: mode === m ? "var(--shadow-card)" : "none",
             }}
           >
-            {m === "camera" ? "◎ Camera" : "✦ Describe"}
+            {m === "camera" ? "Camera" : "Describe"}
           </button>
         ))}
       </div>
@@ -140,10 +140,10 @@ export default function AnalyzePage() {
         {/* Side panel */}
         <div className="flex flex-col gap-4 lg:w-64">
           {mode === "text" && snapshot && (
-            <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border-gold)" }}>
+            <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
               <img src={snapshot} alt="Captured" className="w-full object-cover" />
               <div className="px-3 py-2 flex items-center justify-between" style={{ background: "var(--surface)" }}>
-                <span style={{ fontSize: "11px", color: "var(--gold-dim)", fontFamily: "var(--font-inter)" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-inter)" }}>
                   Snapshot attached
                 </span>
                 <button

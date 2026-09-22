@@ -79,7 +79,7 @@ export default function SetPasswordPage() {
             style={{
               marginTop: "4px", padding: "13px", borderRadius: "8px",
               border: "1px solid var(--border-accent)",
-              background: "linear-gradient(135deg, var(--accent), var(--accent-deep, var(--accent)))",
+              background: "linear-gradient(135deg, var(--accent), var(--accent-deep))",
               color: "#fff",
               fontFamily: "var(--font-playfair), serif",
               fontSize: "17px", fontWeight: 500, letterSpacing: "0.03em",

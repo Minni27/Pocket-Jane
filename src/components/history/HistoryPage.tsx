@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { Icon, Mark } from "@/components/ui";
 
 type Outcome = "success" | "partial" | "miss";
 
@@ -22,7 +23,7 @@ interface AnalysisRow {
 }
 
 const OUTCOME_META: Record<Outcome, { label: string; color: string; bg: string }> = {
-  success: { label: "Accurate",  color: "var(--gold)",       bg: "var(--raised)"   },
+  success: { label: "Accurate",  color: "var(--signal)",       bg: "var(--raised)"   },
   partial: { label: "Partial",   color: "var(--text-dim)",   bg: "var(--surface)"  },
   miss:    { label: "Missed",    color: "var(--accent)",     bg: "var(--surface)"  },
 };
@@ -81,7 +82,7 @@ export default function HistoryPage() {
     setJustSaved(id);
     setTimeout(() => setJustSaved(null), 2500);
     const labels = { success: "Accurate", partial: "Partial", miss: "Missed" };
-    const colors = { success: "var(--gold)", partial: "var(--text-dim)", miss: "var(--accent)" };
+    const colors = { success: "var(--signal)", partial: "var(--text-dim)", miss: "var(--accent)" };
     showToast(
       note.trim() ? `Logged — Jane will learn from this` : `Outcome logged — ${labels[outcome]}`,
       colors[outcome]
@@ -110,7 +111,7 @@ export default function HistoryPage() {
           animation: "fadeUp 0.3s ease",
           whiteSpace: "nowrap",
         }}>
-          <span style={{ fontSize: "16px", color: toast.color }}>✓</span>
+          <Icon name="check" size={15} style={{ color: toast.color }} />
           <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "14px", fontWeight: 500, color: "var(--text-primary)" }}>
             {toast.label}
           </span>
@@ -217,17 +218,14 @@ export default function HistoryPage() {
                 onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = ""; }}
               >
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                {/* Mode icon */}
-                <Link href={`/history/${row.id}`} style={{ textDecoration: "none", flexShrink: 0 }}>
-                  <div style={{
-                    width: "40px", height: "40px", borderRadius: "8px",
-                    background: "var(--raised)", border: "1px solid var(--border-accent)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "16px", color: "var(--accent)",
-                    transition: "background 0.15s ease",
-                  }}>
-                    {row.input_type === "camera" ? "◎" : "✦"}
-                  </div>
+                <Link href={`/history/${row.id}`} style={{ textDecoration: "none", flexShrink: 0, lineHeight: 0 }}>
+                  <Mark
+                    archetype={row.archetype}
+                    traits={row.dominant_traits ?? []}
+                    confidence={row.confidence}
+                    size={44}
+                    hollow={!row.outcome}
+                  />
                 </Link>
 
                 {/* Info */}
@@ -246,7 +244,7 @@ export default function HistoryPage() {
                     <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "var(--text-ghost)" }}>
                       {dateStr} · {timeStr}
                     </span>
-                    <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "var(--gold-dim)" }}>
+                    <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "var(--text-muted)" }}>
                       {row.confidence}% confidence
                     </span>
                     <div className="flex gap-1 flex-wrap">
@@ -279,20 +277,20 @@ export default function HistoryPage() {
                   onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-ghost)"; e.currentTarget.style.borderColor = "var(--border)"; }}
                 >
-                  ✕
+                  <Icon name="trash" size={14} />
                 </button>
 
                 {/* Outcome / log */}
                 {justSaved === row.id ? (
                   <span style={{
                     fontFamily: "var(--font-inter)", fontSize: "11px", fontWeight: 600,
-                    letterSpacing: "0.08em", color: "var(--gold)",
-                    background: "var(--raised)", border: "1px solid var(--border-gold)",
+                    letterSpacing: "0.08em", color: "var(--signal)",
+                    background: "var(--raised)", border: "1px solid var(--border)",
                     borderRadius: "6px", padding: "4px 12px",
                     whiteSpace: "nowrap", flexShrink: 0,
                     animation: "fadeIn 0.2s ease",
                   }}>
-                    ✓ Saved
+                    Saved
                   </span>
                 ) : outcomeMeta ? (
                   <span
@@ -401,7 +399,7 @@ function NoteEditor({
       <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: "10px" }}>
         <button
           onClick={() => onSave(note)}
-          style={{ padding: "6px 18px", borderRadius: "6px", background: "var(--raised)", border: "1px solid var(--border-gold)", color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", cursor: "pointer" }}
+          style={{ padding: "6px 18px", borderRadius: "6px", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", cursor: "pointer" }}
         >Save</button>
         <button
           onClick={() => onSave("")}

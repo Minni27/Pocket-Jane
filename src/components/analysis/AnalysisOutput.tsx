@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
+import { Button, Chip, Icon, Label, Mark, Meter, Textarea } from "@/components/ui";
+import { seedFrom } from "@/lib/seed";
 import type { Profile } from "@/types/profile";
 
 type Outcome = "success" | "partial" | "miss";
@@ -82,7 +84,7 @@ function ProgressNarration() {
 function LoadingSkeleton() {
   return (
     <div className="animate-fade-in flex flex-col gap-4">
-      <div className="divider-ornate">◈ Reading</div>
+      <h2 className="rule">Reading</h2>
       <ProgressNarration />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[...Array(3)].map((_, i) => (
@@ -123,101 +125,95 @@ function ProfileResult({ profile }: { profile: Profile }) {
         <hr style={{ margin: "16px 0", borderColor: "#ddd" }} />
       </div>
 
-      {/* Section label + PDF button */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div className="divider-ornate" style={{ flex: 1 }}>◈ Profile</div>
-        <button
-          onClick={() => window.print()}
-          className="no-print"
-          style={{
-            marginLeft: "16px", flexShrink: 0,
-            padding: "6px 14px", borderRadius: "6px",
-            background: "transparent", border: "1px solid var(--border)",
-            color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em",
-            cursor: "pointer", display: "flex", alignItems: "center", gap: "6px",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; e.currentTarget.style.color = "var(--accent)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
-          </svg>
+      {/* The reading, led by its own mark */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--s-3)" }}>
+        <h2 className="rule" style={{ flex: 1, margin: 0 }}>The reading</h2>
+        <Button variant="ghost" size="sm" icon="print" className="no-print" onClick={() => window.print()}>
           Save PDF
-        </button>
+        </Button>
       </div>
 
-      {/* Top: archetype + traits */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        {/* Archetype card */}
-        <div className="card p-5 col-span-1" style={{ borderColor: "var(--border-gold)", position: "relative", overflow: "hidden" }}>
-          {/* Ghost watermark */}
-          <div style={{
-            position: "absolute", bottom: "-12px", right: "-8px",
-            fontFamily: "var(--font-playfair), serif",
-            fontSize: "80px", fontWeight: 900, lineHeight: 1,
-            color: "var(--accent)", opacity: 0.04,
-            userSelect: "none", pointerEvents: "none",
-          }}>◈</div>
-
-          <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "10px" }}>
-            Archetype
+      <div
+        className="card"
+        style={{
+          ["--mark-shift" as string]: `${seedFrom(profile.archetype, profile.dominantTraits, profile.confidence).shift}deg`,
+          padding: "var(--s-5)",
+          display: "flex", flexDirection: "column", gap: "var(--s-5)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--s-5)", flexWrap: "wrap" }}>
+          <div style={{ flexShrink: 0 }}>
+            <Mark
+              archetype={profile.archetype}
+              traits={profile.dominantTraits}
+              confidence={profile.confidence}
+              size={132}
+              animate
+            />
           </div>
-          <div style={{ fontFamily: "var(--font-playfair), serif", fontSize: "clamp(18px,2.5vw,22px)", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.15, marginBottom: "10px" }}>
-            {profile.archetype}
+
+          <div style={{ flex: 1, minWidth: "min(100%, 260px)" }}>
+            <h3 style={{
+              fontFamily: "var(--font-playfair), serif",
+              fontSize: "var(--t-display)", fontWeight: 600,
+              color: "var(--text-primary)", lineHeight: 1.08,
+              letterSpacing: "-0.02em", margin: "0 0 var(--s-3)",
+              textWrap: "balance",
+            }}>
+              {profile.archetype}
+            </h3>
+
+            <div style={{ display: "flex", alignItems: "baseline", gap: "var(--s-2)", marginBottom: "var(--s-3)" }}>
+              <span className="tabular" style={{
+                fontFamily: "var(--font-playfair), serif",
+                fontSize: "var(--t-title)", fontWeight: 600, color: "var(--mark)",
+              }}>
+                {profile.confidence}
+              </span>
+              <span style={{
+                fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)",
+                color: "var(--text-muted)", letterSpacing: "0.04em",
+              }}>
+                confidence out of 100
+              </span>
+            </div>
+
+            {profile.summary && (
+              <p style={{
+                fontFamily: "var(--font-inter), sans-serif",
+                fontSize: "var(--t-body)", fontWeight: 400, lineHeight: 1.62,
+                color: "var(--text-dim)", margin: 0, maxWidth: "var(--measure)",
+              }}>
+                {profile.summary}
+              </p>
+            )}
           </div>
-          {profile.summary && (
-            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-muted)", lineHeight: 1.65, marginBottom: "14px", fontStyle: "italic" }}>
-              {profile.summary}
-            </p>
-          )}
-          <ConfidenceMeter value={profile.confidence} />
         </div>
 
-        {/* Dominant traits */}
-        <div className="card p-5 col-span-1 md:col-span-2">
-          <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "16px" }}>
-            Dominant Traits
-          </div>
-          <div className="flex flex-col gap-4">
-            {profile.dominantTraits.map((t, i) => (
-              <div key={`${i}-${t.name}`}>
-                <div className="flex justify-between mb-2">
-                  <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 400, color: "var(--text-dim)" }}>
-                    {t.name}
-                  </span>
-                  <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: "14px", fontWeight: 600, color: "var(--accent)" }}>
-                    {t.strength}%
-                  </span>
-                </div>
-                <div className="rounded-full" style={{ height: "4px", background: "var(--raised)", overflow: "hidden" }}>
-                  <div className="h-full rounded-full" style={{ width: `${t.strength}%`, background: "linear-gradient(90deg, var(--accent), var(--accent-bright))", transition: "width 1.2s cubic-bezier(0.4,0,0.2,1)" }} />
-                </div>
-              </div>
-            ))}
-          </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--s-4)", borderTop: "1px solid var(--border-soft)", paddingTop: "var(--s-5)" }}>
+          {profile.dominantTraits.map((t, i) => (
+            <Meter key={`${i}-${t.name}`} label={t.name} value={t.strength} seeded />
+          ))}
         </div>
       </div>
 
       {/* Methodology — expandable */}
-      <div className="divider-ornate" style={{ marginTop: "4px" }}>◎ Methodology</div>
+      <h2 className="rule" style={{ marginTop: "var(--s-2)" }}>How it was read</h2>
       <div className="flex flex-col gap-2">
         {profile.methodology.map((m, i) => (
-          <MethodologyCard key={`${i}-${m.framework}`} step={m} defaultOpen={i === 0} />
+          <MethodologyCard key={`${i}-${m.framework}`} step={m} index={i} defaultOpen={i === 0} />
         ))}
       </div>
 
       {/* Persuasion vectors */}
-      <div className="divider-ornate" style={{ marginTop: "4px" }}>✦ Persuasion Vectors</div>
+      <h2 className="rule" style={{ marginTop: "var(--s-2)" }}>How to move them</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {profile.persuasionAngles.map((p, i) => (
-          <div key={`${i}-${p.label}`} className="card p-4" style={{ borderColor: "var(--border-gold)" }}>
-            <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--gold-dim)", marginBottom: "8px" }}>
+          <div key={`${i}-${p.label}`} className="card" style={{ padding: "var(--s-4)" }}>
+            <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-micro)", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "var(--s-2)" }}>
               {p.label}
             </div>
-            <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "16px", fontWeight: 400, color: "var(--text-primary)", lineHeight: 1.5 }}>
+            <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-body)", fontWeight: 400, color: "var(--text-dim)", lineHeight: 1.6, maxWidth: "var(--measure)" }}>
               {p.text}
             </p>
           </div>
@@ -231,53 +227,71 @@ function ProfileResult({ profile }: { profile: Profile }) {
 }
 
 /* ─── Expandable methodology card ──────────────────────────── */
-function MethodologyCard({ step, defaultOpen }: { step: Profile["methodology"][number]; defaultOpen: boolean }) {
+function MethodologyCard({ step, index, defaultOpen }: { step: Profile["methodology"][number]; index: number; defaultOpen: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="card" style={{ borderLeft: "2px solid var(--accent)", overflow: "hidden" }}>
-      {/* Header row — always visible */}
+    <div className="card" style={{ overflow: "hidden" }}>
       <button
         onClick={() => setOpen((o) => !o)}
         style={{
-          width: "100%", display: "flex", alignItems: "center", gap: "14px",
-          padding: "14px 20px", background: "transparent", border: "none",
+          width: "100%", display: "flex", alignItems: "center", gap: "var(--s-3)",
+          padding: "var(--s-3) var(--s-4)", background: "transparent", border: "none",
           cursor: "pointer", textAlign: "left",
         }}
       >
-        <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: "18px", color: "var(--accent)", lineHeight: 1, flexShrink: 0 }}>
-          {step.icon}
+        <span className="tabular" style={{
+          fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-ui)",
+          color: "var(--text-ghost)", lineHeight: 1, flexShrink: 0,
+          width: "16px",
+        }}>
+          {index + 1}
         </span>
+
         <div style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 600, color: "var(--gold)", letterSpacing: "0.04em" }}>
+          <div style={{
+            fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)",
+            fontWeight: 500, color: "var(--text-primary)", marginBottom: "2px",
+          }}>
             {step.framework}
-          </span>
-          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", color: "var(--text-ghost)", letterSpacing: "0.06em", marginLeft: "10px" }}>
-            {step.cite}
-          </span>
+          </div>
+          {step.cite && (
+            <div style={{
+              fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)",
+              color: "var(--text-ghost)",
+            }}>
+              {step.cite}
+            </div>
+          )}
         </div>
-        <svg
-          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-ghost)" strokeWidth="2" strokeLinecap="round"
-          style={{ flexShrink: 0, transition: "transform 0.25s ease", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-        >
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
+
+        <Icon
+          name="chevron" size={16}
+          style={{
+            color: "var(--text-ghost)",
+            transition: `transform var(--dur-reveal) var(--ease-out)`,
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+          }}
+        />
       </button>
 
-      {/* Expandable body */}
       <div style={{
-        maxHeight: open ? "800px" : "0px",
-        overflow: "hidden",
-        transition: "max-height 0.35s cubic-bezier(0.16,1,0.3,1)",
+        display: "grid",
+        gridTemplateRows: open ? "1fr" : "0fr",
+        transition: `grid-template-rows var(--dur-reveal) var(--ease-out)`,
       }}>
-        <div style={{ padding: "0 20px 16px 52px", display: "flex", flexDirection: "column", gap: "6px" }}>
-          <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-dim)", lineHeight: 1.65 }}>
-            <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>Observed: </span>
-            {step.observation}
-          </div>
-          <div style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-dim)", lineHeight: 1.65 }}>
-            <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>Inference: </span>
-            {step.inference}
+        <div style={{ overflow: "hidden" }}>
+          <div style={{ padding: "0 var(--s-4) var(--s-4) calc(var(--s-3) + 16px + var(--s-3))", display: "flex", flexDirection: "column", gap: "var(--s-2)" }}>
+            {step.observation && (
+              <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", lineHeight: 1.62, color: "var(--text-dim)", margin: 0, maxWidth: "var(--measure)" }}>
+                <span style={{ color: "var(--text-muted)" }}>Observed. </span>{step.observation}
+              </p>
+            )}
+            {step.inference && (
+              <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", lineHeight: 1.62, color: "var(--text-dim)", margin: 0, maxWidth: "var(--measure)" }}>
+                <span style={{ color: "var(--text-muted)" }}>Therefore. </span>{step.inference}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -287,7 +301,7 @@ function MethodologyCard({ step, defaultOpen }: { step: Profile["methodology"][n
 
 /* ─── Outcome logger ────────────────────────────────────────── */
 const OUTCOME_OPTIONS: { value: Outcome; label: string; color: string }[] = [
-  { value: "success", label: "Accurate", color: "var(--gold)"     },
+  { value: "success", label: "Accurate", color: "var(--signal)"     },
   { value: "partial", label: "Partial",  color: "var(--text-dim)" },
   { value: "miss",    label: "Missed",   color: "var(--accent)"   },
 ];
@@ -382,9 +396,9 @@ function OutcomeLogger({ id }: { id: string | null }) {
                 <button onClick={() => setPicking(false)} style={{ fontSize: "12px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "8px 4px" }}>✕</button>
               </>
             ) : (
-              <button onClick={() => setPicking(true)} style={{ padding: "10px 24px", borderRadius: "8px", background: "transparent", border: "1px solid var(--border-gold)", color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s ease" }}
+              <button onClick={() => setPicking(true)} style={{ padding: "10px 24px", borderRadius: "8px", background: "transparent", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border-gold)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; }}
               >Log Outcome →</button>
             )}
           </div>
@@ -422,7 +436,7 @@ function OutcomeLogger({ id }: { id: string | null }) {
               <button
                 onClick={() => log(noting, note)}
                 disabled={saving}
-                style={{ padding: "8px 20px", borderRadius: "7px", background: "var(--raised)", border: "1px solid var(--border-gold)", color: "var(--gold)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.5 : 1, transition: "all 0.2s ease" }}
+                style={{ padding: "8px 20px", borderRadius: "7px", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.5 : 1, transition: "all 0.2s ease" }}
               >
                 {saving ? "Saving…" : "Save"}
               </button>
@@ -449,7 +463,7 @@ function OutcomeLogger({ id }: { id: string | null }) {
 
 /* ─── Confidence meter ──────────────────────────────────────── */
 function ConfidenceMeter({ value }: { value: number }) {
-  const color = value >= 75 ? "var(--gold)" : value >= 55 ? "var(--text-dim)" : "var(--accent)";
+  const color = value >= 75 ? "var(--signal)" : value >= 55 ? "var(--text-dim)" : "var(--accent)";
   return (
     <div>
       <div className="flex justify-between items-center mb-1.5">

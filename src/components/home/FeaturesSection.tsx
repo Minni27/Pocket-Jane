@@ -94,16 +94,7 @@ export default function FeaturesSection() {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         >
-          <span style={{
-            display: "inline-block",
-            fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "10px", fontWeight: 600,
-            letterSpacing: "0.22em", textTransform: "uppercase",
-            color: "var(--gold-dim)",
-            marginBottom: "18px",
-          }}>
-            The Intelligence
-          </span>
+          
 
           <h2 style={{
             fontFamily: "var(--font-playfair), serif",
@@ -206,7 +197,7 @@ function CarouselCard({
   accentRgbDark: string;
 }) {
   const isAccent = feature.color === "accent";
-  const accentColor = isAccent ? "var(--accent)" : "var(--gold)";
+  const accentColor = isAccent ? "var(--accent)" : "var(--signal)";
   const accentRgb = isAccent
     ? (isLight ? accentRgbLight : accentRgbDark)
     : (isLight ? "27,29,127" : "201,168,76");

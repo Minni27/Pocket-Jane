@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon } from "@/components/ui";
+
 interface Props {
   value: string;
   onChange: (v: string) => void;
@@ -39,7 +41,7 @@ export default function TextInput({ value, onChange }: Props) {
         className="flex items-center gap-2 px-4 py-3"
         style={{ borderBottom: "1px solid var(--border-soft)" }}
       >
-        <span style={{ color: "var(--accent)", fontSize: "14px" }}>✦</span>
+        <Icon name="pen" size={14} style={{ color: "var(--accent)" }} />
         <span style={{
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: "11px", fontWeight: 500,
@@ -81,7 +83,7 @@ export default function TextInput({ value, onChange }: Props) {
         <span style={{
           fontFamily: "var(--font-inter), sans-serif",
           fontSize: "11px",
-          color: wordCount > 20 ? "var(--gold)" : "var(--text-ghost)",
+          color: wordCount > 20 ? "var(--signal)" : "var(--text-ghost)",
           transition: "color 0.3s ease",
         }}>
           {wordCount} words
