@@ -130,7 +130,7 @@ export default function Navigation() {
               fontFamily: "var(--font-inter), sans-serif",
               fontSize: "12px", fontWeight: 500,
               letterSpacing: "0.07em", textTransform: "uppercase",
-              color: active ? "var(--accent-mid)" : "var(--text-muted)",
+              color: active ? "var(--accent-text)" : "var(--text-muted)",
               textDecoration: "none",
               padding: "6px 10px", borderRadius: "6px",
               background: active ? activeBg : "transparent",

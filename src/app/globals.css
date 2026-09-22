@@ -57,13 +57,15 @@ html[data-theme="light"] {
 
   --text-primary:  #14161c;
   --text-dim:      #3b3f4a;
-  --text-muted:    #6b7080;
-  --text-ghost:    #9ba0ad;
+  --text-muted:    #585d6b;
+  --text-ghost:    #6c7180;
 
   --accent:        #2d5be3;
   --accent-mid:    #4d78ff;
   --accent-bright: #7a9cff;
   --accent-deep:   #1a3aa8;
+  /* Accent applied to text; accent-mid fails 4.5:1 at body sizes */
+  --accent-text:   #3c67ee;
 
   --signal:        #b8860b;
 
@@ -89,13 +91,14 @@ html[data-theme="dark"] {
 
   --text-primary:  #f2ede2;
   --text-dim:      #c4bdb0;
-  --text-muted:    #8a8378;
-  --text-ghost:    #5c564e;
+  --text-muted:    #9b948a;
+  --text-ghost:    #7f7971;
 
   --accent:        #b91c1c;
   --accent-mid:    #dc2626;
   --accent-bright: #f05252;
   --accent-deep:   #7f1d1d;
+  --accent-text:   #e73131;
 
   --signal:        #c9a84c;
 

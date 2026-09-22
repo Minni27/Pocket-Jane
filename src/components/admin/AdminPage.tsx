@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Icon } from "@/components/ui";
+import { Button, Icon, Input, Label } from "@/components/ui";
 
 type AdminUser = {
   id: string;
@@ -53,15 +53,11 @@ export default function AdminPage() {
       )}
 
       <div>
-        <h1 style={{
-          fontFamily: "var(--font-playfair), serif",
-          fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 600,
-          color: "var(--text-primary)", lineHeight: 1.1, marginBottom: "6px",
-        }}>
+        <h1 style={{ fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-display)", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.05, letterSpacing: "-0.02em", margin: "0 0 var(--s-2)" }}>
           Users
         </h1>
-        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-muted)" }}>
-          Create accounts and hand out the password. Each person gets their own private library and readings.
+        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", color: "var(--text-muted)", margin: 0, maxWidth: "var(--measure)" }}>
+          Create an account and hand over the password yourself. Each person gets their own library, their own readings, and their own calibration.
         </p>
       </div>
 
@@ -78,20 +74,9 @@ export default function AdminPage() {
       {adding
         ? <AddUserForm onDone={(msg) => { setAdding(false); if (msg) { show(msg); refresh(); } }} />
         : (
-          <button
-            onClick={() => setAdding(true)}
-            style={{
-              alignSelf: "flex-start", padding: "10px 22px", borderRadius: "8px",
-              background: "transparent", border: "1px solid var(--border)",
-              color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif",
-              fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em",
-              textTransform: "uppercase", cursor: "pointer", transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-          >
-            + New user
-          </button>
+          <Button variant="secondary" icon="plus" onClick={() => setAdding(true)} style={{ alignSelf: "flex-start" }}>
+            New user
+          </Button>
         )}
 
       {loading ? (
@@ -148,12 +133,12 @@ function AddUserForm({ onDone }: { onDone: (msg?: string) => void }) {
       <div className="flex flex-col sm:flex-row gap-3">
         <div style={{ flex: 1 }}>
           <Label>Email</Label>
-          <Input type="email" value={email} onChange={setEmail} placeholder="them@example.com" />
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="them@example.com" />
         </div>
         <div style={{ flex: 1 }}>
           <Label>Password</Label>
           <div className="flex gap-2">
-            <Input type="text" value={password} onChange={setPassword} placeholder="at least 8 characters" />
+            <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="at least 8 characters" />
             <button type="button" onClick={generate}
               style={{ flexShrink: 0, padding: "0 12px", borderRadius: "8px", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer", whiteSpace: "nowrap" }}
             >Generate</button>
@@ -308,21 +293,4 @@ function UserRow({ user, onChanged }: { user: AdminUser; onChanged: (msg: string
   );
 }
 
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <label style={{ display: "block", fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "7px" }}>
-      {children}
-    </label>
-  );
-}
 
-function Input({ type, value, onChange, placeholder }: { type: string; value: string; onChange: (v: string) => void; placeholder: string }) {
-  return (
-    <input
-      type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-      style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "8px", outline: "none", padding: "10px 12px", fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-primary)", caretColor: "var(--accent)" }}
-      onFocus={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; }}
-      onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
-    />
-  );
-}

@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { supabase } from "@/lib/supabase";
-import { Icon } from "@/components/ui";
+import { Button, Icon } from "@/components/ui";
 
 type UploadStatus = {
   id: string;
@@ -223,170 +223,127 @@ export default function LibraryPage() {
   return (
     <div className="flex flex-col flex-1 px-4 py-8 max-w-4xl mx-auto w-full gap-10">
 
-      {/* Header */}
       <div>
-        <h1 style={{ fontFamily: "var(--font-playfair), serif", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.1, marginBottom: "6px" }}>
+        <h1 style={{ fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-display)", fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.05, letterSpacing: "-0.02em", margin: "0 0 var(--s-2)" }}>
           Knowledge Library
         </h1>
-        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-muted)" }}>
-          Upload PDFs of psychology and persuasion books. Jane reads them and cites them in every analysis.
+        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", color: "var(--text-muted)", margin: 0, maxWidth: "var(--measure)" }}>
+          Upload psychology and persuasion books. Jane searches them during every reading and cites the passages she actually used.
         </p>
       </div>
 
-      {/* Drop zone */}
       <div
         {...getRootProps()}
         style={{
-          padding: "48px 32px", borderRadius: "12px", cursor: "pointer",
-          border: `2px dashed ${isDragActive ? "var(--border-accent)" : "var(--border)"}`,
-          background: isDragActive ? "var(--raised)" : "var(--surface)",
-          transition: "all 0.25s ease", textAlign: "center",
-          boxShadow: isDragActive ? "var(--shadow-glow)" : "none",
+          padding: "var(--s-6) var(--s-5)", borderRadius: "var(--r-card)", cursor: "pointer",
+          border: `1px dashed ${isDragActive ? "var(--accent)" : "var(--border)"}`,
+          background: isDragActive ? "var(--raised)" : "transparent",
+          transition: "border-color var(--dur-state) ease, background var(--dur-state) ease",
+          textAlign: "center",
         }}
       >
         <input {...getInputProps()} />
-        <div style={{
-          width: "56px", height: "56px", borderRadius: "12px", margin: "0 auto 16px",
-          background: isDragActive ? "var(--raised)" : "var(--surface)",
-          border: `1px solid ${isDragActive ? "var(--border-accent)" : "var(--border)"}`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "22px", color: "var(--accent)", transition: "all 0.25s ease",
-        }}>
-          <Icon name={isDragActive ? "plus" : "books"} size={24} />
+        <div style={{ color: isDragActive ? "var(--accent)" : "var(--text-ghost)", marginBottom: "var(--s-3)", display: "flex", justifyContent: "center", transition: "color var(--dur-state) ease" }}>
+          <Icon name={isDragActive ? "plus" : "books"} size={26} />
         </div>
-        <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "22px", fontWeight: 500, color: isDragActive ? "var(--text-primary)" : "var(--text-dim)", marginBottom: "6px", transition: "color 0.25s ease" }}>
-          {isDragActive ? "Release to ingest" : "Drop your books here"}
+        <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-title)", fontWeight: 500, color: isDragActive ? "var(--text-primary)" : "var(--text-dim)", margin: "0 0 var(--s-1)" }}>
+          {isDragActive ? "Release to index" : "Drop your books here"}
         </p>
-        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-ghost)" }}>
-          PDF only · up to {MAX_BOOKS} books · {MAX_FILE_BYTES / 1024 / 1024}MB each
+        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: "var(--text-ghost)", margin: 0 }}>
+          PDF · up to {MAX_BOOKS} books · {MAX_FILE_BYTES / 1024 / 1024}MB each
         </p>
       </div>
 
-      {/* Upload queue */}
       {uploads.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <SectionLabel>Processing Queue</SectionLabel>
-          {uploads.map((u) => (
-            <div
-              key={u.id}
-              className="card p-4 flex items-center gap-4"
-              style={{
-                borderColor: u.status === "done"
-                  ? "var(--border)"
-                  : u.status === "error"
-                    ? "var(--border-accent)"
-                    : "var(--border)",
-              }}
-            >
-              <div style={{
-                width: "36px", height: "36px", borderRadius: "8px", flexShrink: 0,
-                background: "var(--raised)",
-                border: `1px solid ${u.status === "done" ? "var(--border)" : "var(--border-accent)"}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "14px",
-                color: u.status === "done" ? "var(--signal)" : u.status === "error" ? "var(--accent)" : "var(--accent)",
-              }}>
-                {u.status === "done" ? <Icon name="check" size={15}/> : u.status === "error" ? <Icon name="alert" size={15}/> : u.status === "queued" ? <Icon name="clock" size={15}/> : <Spinner />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", gap: "8px" }}>
-                  <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 400, color: "var(--text-dim)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div className="flex flex-col" style={{ gap: "var(--s-2)" }}>
+          <h2 className="rule" style={{ margin: 0 }}>Processing</h2>
+          {uploads.map((u) => {
+            const failed = u.status === "error";
+            const done   = u.status === "done";
+            return (
+              <div key={u.id} className="card" style={{ padding: "var(--s-3) var(--s-4)", borderColor: failed ? "var(--border-accent)" : undefined }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "var(--s-3)" }}>
+                  <span style={{ color: failed ? "var(--accent)" : done ? "var(--signal)" : "var(--text-muted)", display: "flex" }}>
+                    {done ? <Icon name="check" size={15} />
+                      : failed ? <Icon name="alert" size={15} />
+                      : u.status === "queued" ? <Icon name="clock" size={15} />
+                      : <Icon name="spinner" size={15} style={{ animation: "spin 0.9s linear infinite" }} />}
+                  </span>
+                  <p style={{ flex: 1, minWidth: 0, fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", color: "var(--text-dim)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {u.name}
                   </p>
-                  <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", color: u.status === "done" ? "var(--signal)" : u.status === "error" ? "var(--accent)" : "var(--text-muted)", flexShrink: 0, whiteSpace: "nowrap" }}>
-                    {u.status === "done" ? "Indexed" : u.status === "error" ? "Failed" : u.status === "queued" ? "Queued" : `${u.progress}%`}
+                  <span className="tabular" style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: failed ? "var(--accent)" : "var(--text-ghost)", flexShrink: 0 }}>
+                    {done ? "Indexed" : failed ? "Failed" : u.status === "queued" ? "Queued" : `${u.progress}%`}
                   </span>
                 </div>
+
                 {u.detail && (
-                  <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: u.status === "error" ? "var(--accent)" : "var(--text-ghost)", marginBottom: "6px" }}>
+                  <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: failed ? "var(--accent)" : "var(--text-ghost)", margin: "var(--s-2) 0 0", paddingLeft: "27px", lineHeight: 1.5 }}>
                     {u.detail}
                   </p>
                 )}
-                {u.status !== "error" && (
-                  <div className="rounded-full" style={{ height: "3px", background: "var(--raised)" }}>
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${u.progress}%`,
-                        background: u.status === "done"
-                          ? "linear-gradient(90deg, var(--accent-deep), var(--signal))"
-                          : "linear-gradient(90deg, var(--accent), var(--accent-bright))",
-                        transition: "width 0.4s ease",
-                      }}
-                    />
+
+                {!failed && !done && (
+                  <div style={{ height: "2px", background: "var(--raised)", borderRadius: "var(--r-pill)", marginTop: "var(--s-3)", overflow: "hidden" }}>
+                    <div style={{ width: `${u.progress}%`, height: "100%", background: "var(--accent)", transition: "width 0.4s var(--ease-out)" }} />
                   </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Indexed books */}
-      <div className="flex flex-col gap-4">
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "12px" }}>
-          <SectionLabel>In Your Library</SectionLabel>
+      <div className="flex flex-col" style={{ gap: "var(--s-3)" }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "var(--s-3)" }}>
+          <h2 className="rule" style={{ margin: 0 }}>In your library</h2>
           {books.length > 0 && (
-            <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: books.length >= MAX_BOOKS ? "var(--accent)" : "var(--text-muted)", flexShrink: 0 }}>
-              {books.length} of {MAX_BOOKS} books ·{" "}
-              {books.reduce((s, b) => s + b.chunk_count, 0).toLocaleString()} passages
+            <span className="tabular" style={{
+              fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)",
+              color: books.length >= MAX_BOOKS ? "var(--accent)" : "var(--text-muted)", flexShrink: 0,
+            }}>
+              {books.length}/{MAX_BOOKS} · {books.reduce((a, b) => a + b.chunk_count, 0).toLocaleString()} passages
             </span>
           )}
         </div>
 
         {loadingBooks ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col" style={{ gap: "var(--s-2)" }}>
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="card p-4" style={{ height: "60px" }}>
-                <div className="shimmer h-3 w-40 rounded mb-2" />
+              <div key={i} className="card" style={{ padding: "var(--s-4)", height: "62px" }}>
+                <div className="shimmer h-3 w-40 rounded" style={{ marginBottom: "var(--s-2)" }} />
                 <div className="shimmer h-2 w-24 rounded" />
               </div>
             ))}
           </div>
         ) : books.length === 0 ? (
-          <div className="card p-8 text-center">
-            <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "18px", color: "var(--text-muted)", fontStyle: "italic" }}>
-              Nothing indexed yet.
+          <div className="card" style={{ padding: "var(--s-6) var(--s-5)", textAlign: "center" }}>
+            <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-title)", color: "var(--text-muted)", margin: "0 0 var(--s-1)" }}>
+              Nothing indexed yet
             </p>
-            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", color: "var(--text-ghost)", marginTop: "6px" }}>
-              Drop a PDF above and Jane will start citing it.
+            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: "var(--text-ghost)", margin: 0 }}>
+              Until you add a book, Jane cites from memory rather than from your shelf.
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col" style={{ gap: "var(--s-2)" }}>
             {books.map((b) => (
-              <div key={b.book_title} className="card p-4 flex items-center gap-4" style={{ borderColor: "var(--border)" }}>
-                <div style={{
-                  width: "34px", height: "42px", borderRadius: "4px", flexShrink: 0,
-                  background: "var(--raised)", border: "1px solid var(--border)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "12px", color: "var(--signal)",
-                }}>
-                  <Icon name="books" size={14} />
-                </div>
+              <div key={b.book_title} className="card" style={{ padding: "var(--s-3) var(--s-4)", display: "flex", alignItems: "center", gap: "var(--s-3)" }}>
+                <Icon name="books" size={17} style={{ color: "var(--text-ghost)" }} />
                 <div className="flex-1 min-w-0">
-                  <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "16px", fontWeight: 500, color: "var(--text-primary)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <p style={{
+                    fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)",
+                    fontWeight: 500, color: "var(--text-primary)", margin: "0 0 1px",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>
                     {b.book_title}
                   </p>
-                  <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: "var(--text-muted)" }}>
+                  <p className="tabular" style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: "var(--text-ghost)", margin: 0 }}>
                     {b.author !== "Unknown" ? `${b.author} · ` : ""}{b.chunk_count.toLocaleString()} passages
                   </p>
                 </div>
-                <button
-                  onClick={() => deleteBook(b.book_title)}
-                  title="Remove from library"
-                  style={{
-                    width: "28px", height: "28px", borderRadius: "6px", flexShrink: 0,
-                    background: "transparent", border: "1px solid var(--border)",
-                    color: "var(--text-ghost)", cursor: "pointer", fontSize: "12px",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    transition: "all 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-ghost)"; e.currentTarget.style.borderColor = "var(--border)"; }}
-                >
-                  <Icon name="trash" size={14} />
-                </button>
+                <Button variant="ghost" size="sm" icon="trash" onClick={() => deleteBook(b.book_title)}
+                  aria-label={`Remove ${b.book_title}`} />
               </div>
             ))}
           </div>
