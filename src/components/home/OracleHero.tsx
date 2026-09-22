@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import HeroMark from "./HeroMark";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 
@@ -19,8 +20,6 @@ export default function OracleHero() {
 
   const logoOpacity = useTransform(smooth, [0, 0.10, 0.18], [0, 0, 1]);
   const logoY       = useTransform(smooth, [0, 0.18], [36, 0]);
-  const bloomScale  = useTransform(smooth, [0, 0.45], [0.1, 2.4]);
-  const bloomOp     = useTransform(smooth, [0, 0.10, 0.65, 0.95], [0, 0.75, 0.55, 0]);
   const readClip    = useTransform(smooth, [0.28, 0.56], ["inset(0 100% 0 0)","inset(0 0% 0 0)"]);
   const readOp      = useTransform(smooth, [0.26, 0.30], [0, 1]);
   const line2Op     = useTransform(smooth, [0.52, 0.70], [0, 1]);
@@ -31,10 +30,6 @@ export default function OracleHero() {
   const hintOp      = useTransform(smooth, [0, 0.07, 0.18], [1, 1, 0]);
   const gridOp      = useTransform(smooth, [0, 0.14, 0.72, 1], [0, 0.8, 0.8, 0]);
 
-  // Jane (light) = blue bloom; Red John (dark) = red bloom
-  const bloomBg = isLight
-    ? "radial-gradient(circle, rgba(45,91,227,0.28) 0%, rgba(45,91,227,0.06) 45%, transparent 70%)"
-    : "radial-gradient(circle, rgba(185,28,28,0.55) 0%, rgba(100,0,0,0.2) 40%, transparent 70%)";
 
   const gridColor = isLight ? "rgba(45,91,227,0.06)" : "rgba(185,28,28,0.055)";
 
@@ -63,13 +58,7 @@ export default function OracleHero() {
         {/* Background */}
         <div style={{ position: "absolute", inset: 0, background: "var(--bg)", transition: "background 0.4s ease" }} />
 
-        {/* Bloom */}
-        <motion.div style={{
-          position: "absolute", top: "50%", left: "50%", x: "-50%", y: "-50%",
-          width: "640px", height: "640px", borderRadius: "50%",
-          background: bloomBg, filter: "blur(60px)",
-          scale: bloomScale, opacity: bloomOp, pointerEvents: "none",
-        }} />
+        <HeroMark progress={smooth} />
 
         {/* Grid */}
         <motion.div style={{

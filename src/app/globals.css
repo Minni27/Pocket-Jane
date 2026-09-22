@@ -315,3 +315,14 @@ a { text-underline-offset: 0.18em; }
    bar rendered over desktop content. */
 .tabbar { display: none; }
 @media (max-width: 639px) { .tabbar { display: flex; } }
+
+/* The hero mark is drawn by scroll position, not by a CSS animation, so the
+   blanket reduced-motion rule above cannot reach it. Forcing the dash off
+   renders the mark complete and still: the shape stays, the drawing goes. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-mark path {
+    stroke-dasharray: none !important;
+    stroke-dashoffset: 0 !important;
+    opacity: 0.8;
+  }
+}
