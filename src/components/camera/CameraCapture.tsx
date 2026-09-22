@@ -46,6 +46,7 @@ export default function CameraCapture({ onSnapshot, snapshot }: Props) {
   if (snapshot) {
     return (
       <div className="relative overflow-hidden"  style={{ aspectRatio: "3/2", borderRadius: "var(--r-card)" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- a data:/blob: camera frame, which next/image cannot optimize, and image optimization is metered on Vercel. */}
         <img src={snapshot} alt="Captured snapshot" className="w-full h-full object-cover" />
         <div className="absolute inset-0" style={{ border: "1px solid var(--border-accent)", borderRadius: "var(--r-card)", boxShadow: "inset 0 0 40px rgba(0,0,0,0.2)" }} />
         <CornerBrackets />

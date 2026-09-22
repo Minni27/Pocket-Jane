@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored, minified, and not ours to fix: the pdf.js worker is copied
+    // from node_modules into public/ so it is served from this origin rather
+    // than a CDN. See SECURITY.md.
+    "public/pdf.worker.min.mjs",
+    "public/sw.js",
   ]),
 ]);
 

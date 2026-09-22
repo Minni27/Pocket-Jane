@@ -18,7 +18,7 @@ export default function SetPasswordPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) {
-        router.replace("/login?error=" + encodeURIComponent("That invite link has expired or was already used."));
+        router.replace("/login?error=session_missing");
         return;
       }
       setEmail(data.user.email ?? null);

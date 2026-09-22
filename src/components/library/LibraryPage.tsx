@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { supabase } from "@/lib/supabase";
 import { Button, Icon } from "@/components/ui";
+import { LIMITS } from "@/lib/limits";
+import { chunkText, parseFilename } from "@/lib/pdf-text";
 
 type UploadStatus = {
   id: string;
@@ -13,25 +15,14 @@ type UploadStatus = {
   detail?: string;
 };
 
-const MAX_FILE_BYTES = 60 * 1024 * 1024; // 60MB — scanned-ish book PDFs run large
-const MAX_BOOKS      = 7;
-const MAX_CHUNKS_PER_BOOK = 4000;        // ~4.8M characters; guards against runaway PDFs
+// Limits live in lib/limits.ts and are enforced by the API. These are the
+// same numbers, used only to fail fast before a 60MB read — if the two ever
+// disagreed, the user would wait through a whole upload for a rejection.
+const MAX_FILE_BYTES = LIMITS.PDF_BYTES;
+const MAX_BOOKS      = LIMITS.BOOKS_PER_USER;
+const MAX_CHUNKS_PER_BOOK = LIMITS.CHUNKS_PER_BOOK;
 
-const CHUNK_SIZE   = 1200; // characters per chunk
-const CHUNK_BATCH  = 200;  // chunks per /api/ingest request (keeps payloads ~250KB)
-const CHUNK_OVERLAP = 150;
-
-function chunkText(text: string): string[] {
-  const chunks: string[] = [];
-  let i = 0;
-  while (i < text.length) {
-    const chunk = text.slice(i, i + CHUNK_SIZE).trim();
-    if (chunk.length > 120) chunks.push(chunk);
-    if (chunks.length >= MAX_CHUNKS_PER_BOOK) break;
-    i += CHUNK_SIZE - CHUNK_OVERLAP;
-  }
-  return chunks;
-}
+const CHUNK_BATCH = 200;   // passages per /api/ingest request (keeps payloads ~250KB)
 
 async function extractPdfText(
   file: File,
@@ -39,8 +30,11 @@ async function extractPdfText(
 ): Promise<string> {
   // Dynamically import pdfjs to avoid SSR issues
   const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc =
-    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+  // Served from this origin, copied from node_modules at public/.
+  // A cross-origin worker URL is fetched and run from a blob: that inherits
+  // this origin, so a compromised CDN would execute with the user's session —
+  // it could call /api/admin/* as them. Keep this local.
+  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
@@ -49,8 +43,11 @@ async function extractPdfText(
   for (let p = 1; p <= pdf.numPages; p++) {
     const page = await pdf.getPage(p);
     const content = await page.getTextContent();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pageText = content.items.map((item: any) => item.str ?? "").join(" ");
+    // TextItem has .str; TextMarkedContent does not. Narrowing on the
+    // property avoids an `any` and silently skips the marked-content entries.
+    const pageText = content.items
+      .map((item) => ("str" in item ? item.str : ""))
+      .join(" ");
     fullText += pageText + "\n";
     onProgress(Math.round((p / pdf.numPages) * 50)); // first 50% = extraction
   }
@@ -77,16 +74,6 @@ async function ingestChunks(
     }
     onProgress(50 + Math.round(((b + 1) / totalBatches) * 50));
   }
-}
-
-// "Emotions_Revealed -Paul_Ekman.pdf" → { title: "Emotions Revealed", author: "Paul Ekman" }
-function parseFilename(filename: string): { title: string; author: string } {
-  const clean = (s: string) => s.replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
-  const noExt = filename.replace(/\.pdf$/i, "");
-  const parts = noExt.split(/\s*[-–—]\s*/).map(clean).filter(Boolean);
-
-  if (parts.length >= 2) return { title: parts[0], author: parts.slice(1).join(" - ") };
-  return { title: clean(noExt), author: "Unknown" };
 }
 
 type IndexedBook = { book_title: string; author: string; chunk_count: number };
@@ -119,7 +106,12 @@ export default function LibraryPage() {
     setLoadingBooks(false);
   }, []);
 
-  useEffect(() => { refreshBooks(); }, [refreshBooks]);
+  // The rule targets derived state recomputed in an effect. This is a
+  // mount-time fetch of server data — the setState happens in the awaited
+  // callback, which is the "subscribe to an external system" case the rule
+  // documents as legitimate but cannot distinguish statically.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { void refreshBooks(); }, [refreshBooks]);
 
   async function deleteBook(title: string) {
     await supabase.from("book_chunks").delete().eq("book_title", title);
@@ -144,6 +136,9 @@ export default function LibraryPage() {
 
       const chunks = chunkText(fullText);
       if (chunks.length === 0) throw new Error("No readable text — is this a scanned PDF?");
+      if (chunks.length >= MAX_CHUNKS_PER_BOOK) {
+        setStatus(id, { detail: `Very long book — indexing the first ${MAX_CHUNKS_PER_BOOK} passages` });
+      }
       setStatus(id, { progress: 50, status: "ingesting", detail: `${chunks.length} passages` });
 
       await ingestChunks(bookTitle, author, chunks, (pct) =>
@@ -351,23 +346,5 @@ export default function LibraryPage() {
       </div>
 
     </div>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--text-muted)" }}>
-      {children}
-    </p>
-  );
-}
-
-function Spinner() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
-      <path d="M12 3 A9 9 0 0 1 21 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
   );
 }

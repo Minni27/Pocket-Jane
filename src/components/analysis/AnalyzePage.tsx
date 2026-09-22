@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useMounted } from "@/lib/use-mounted";
 import { useTheme } from "next-themes";
 import CameraCapture from "@/components/camera/CameraCapture";
 import TextInput from "@/components/analysis/TextInput";
@@ -12,8 +13,7 @@ type InputMode = "camera" | "text";
 
 export default function AnalyzePage() {
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
   const isLight = !mounted || theme !== "dark";
 
   const [mode, setMode] = useState<InputMode>("camera");
@@ -23,6 +23,10 @@ export default function AnalyzePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<Profile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Surfaced on the button after 15s so a long wait reads as progress
+  // rather than a hang. Reset where the reading starts, so the effect only
+  // ever owns the interval.
+  const [elapsed, setElapsed] = useState(0);
 
   function handleSnapshot(dataUrl: string) {
     setSnapshot(dataUrl);
@@ -38,6 +42,7 @@ export default function AnalyzePage() {
     setIsAnalyzing(true);
     setResult(null);
     setError(null);
+    setElapsed(0);
 
     try {
       const res = await fetch("/api/analyze", {
@@ -61,11 +66,8 @@ export default function AnalyzePage() {
     }
   }
 
-  // Surfaced on the button after 15s so a long wait reads as progress
-  // rather than a hang.
-  const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
-    if (!isAnalyzing) { setElapsed(0); return; }
+    if (!isAnalyzing) return;
     const t = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(t);
   }, [isAnalyzing]);
@@ -142,6 +144,7 @@ export default function AnalyzePage() {
         <div className="flex flex-col lg:w-72" style={{ gap: "var(--s-4)" }}>
           {mode === "text" && snapshot && (
             <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- a data:/blob: camera frame, which next/image cannot optimize, and image optimization is metered on Vercel. */}
               <img src={snapshot} alt="Captured" className="w-full object-cover" />
               <div className="px-3 py-2 flex items-center justify-between" style={{ background: "var(--surface)" }}>
                 <span style={{ fontSize: "var(--t-meta)", color: "var(--text-muted)", fontFamily: "var(--font-inter)" }}>

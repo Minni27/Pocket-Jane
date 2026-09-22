@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
-import { Button, Chip, Icon, Label, Mark, Meter, Textarea } from "@/components/ui";
+import { Button, Icon, Mark, Meter } from "@/components/ui";
+import { LIMITS } from "@/lib/limits";
+import type { OutcomeUpdate } from "@/lib/database.types";
 import { seedFrom } from "@/lib/seed";
 import type { Profile } from "@/types/profile";
 
@@ -26,21 +28,25 @@ export default function AnalysisOutput({ isLoading, result }: Props) {
 // call. Naming the stage as it happens makes the same wait legible.
 function ProgressNarration() {
   const [stage, setStage] = useState(0);
-  const [titles, setTitles] = useState<string[]>([]);
+  // One title, chosen when the list arrives — not during render. Picking it
+  // inside useMemo made render impure, so a re-render could name a different
+  // book mid-wait and the narration looked like it was guessing.
+  const [book, setBook] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     supabase
       .from("library_books")
       .select("book_title")
-      .then(({ data }) => setTitles(
-        ((data ?? []) as { book_title: string }[]).map((b) => b.book_title)
-      ));
+      .then(({ data }) => {
+        if (cancelled) return;
+        const titles = ((data ?? []) as { book_title: string }[]).map((b) => b.book_title);
+        if (titles.length) setBook(titles[Math.floor(Math.random() * titles.length)]);
+      });
+    return () => { cancelled = true; };
   }, []);
 
   const steps = useMemo(() => {
-    const book = titles.length
-      ? titles[Math.floor(Math.random() * titles.length)]
-      : null;
     return [
       { at: 0,     text: "Taking in the details…" },
       { at: 4500,  text: "Searching your library…" },
@@ -49,7 +55,7 @@ function ProgressNarration() {
       { at: 22000, text: "Committing to a read…" },
       { at: 30000, text: "Almost there — the model is still thinking…" },
     ];
-  }, [titles]);
+  }, [book]);
 
   useEffect(() => {
     const timers = steps.map((s, i) =>
@@ -337,9 +343,8 @@ function OutcomeLogger({ id }: { id: string | null }) {
     setSaving(true);
     setNoting(null);
     if (id) {
-      const payload = { outcome, outcome_note: outcomeNote.trim() || null };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from("analyses").update(payload as any).eq("id", id);
+      const payload: OutcomeUpdate = { outcome, outcome_note: outcomeNote.trim() || null };
+      const { error } = await supabase.from("analyses").update(payload).eq("id", id);
       if (error) { showToast("Failed to save — try again"); setSaving(false); return; }
     }
     setSaved(outcome);
@@ -413,6 +418,9 @@ function OutcomeLogger({ id }: { id: string | null }) {
             </label>
             <textarea
               value={note}
+              // Matches the analyses_note_len constraint, so the save cannot
+              // fail on a length the UI allowed.
+              maxLength={LIMITS.OUTCOME_NOTE_CHARS}
               onChange={(e) => setNote(e.target.value)}
               placeholder={NOTE_PROMPT[noting].placeholder}
               rows={3}
@@ -458,25 +466,5 @@ function OutcomeLogger({ id }: { id: string | null }) {
         )}
       </div>
     </>
-  );
-}
-
-/* ─── Confidence meter ──────────────────────────────────────── */
-function ConfidenceMeter({ value }: { value: number }) {
-  const color = value >= 75 ? "var(--signal)" : value >= 55 ? "var(--text-dim)" : "var(--accent-text)";
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-1.5">
-        <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-micro)", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)" }}>
-          Confidence
-        </span>
-        <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-title)", fontWeight: 600, color }}>
-          {value}%
-        </span>
-      </div>
-      <div className="rounded-full" style={{ height: "4px", background: "var(--raised)" }}>
-        <div className="h-full rounded-full" style={{ width: `${value}%`, background: color, transition: "width 1s cubic-bezier(0.4,0,0.2,1)" }} />
-      </div>
-    </div>
   );
 }

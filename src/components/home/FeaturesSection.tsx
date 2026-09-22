@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
+import { useMounted } from "@/lib/use-mounted";
 import { motion, useInView, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import { SECTION_VH } from "./scrollMap";
 import { useTheme } from "next-themes";
@@ -61,8 +62,7 @@ const features = [
 
 export default function FeaturesSection() {
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
   const isLight = !mounted || theme !== "dark";
   const sectionRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
@@ -71,6 +71,10 @@ export default function FeaturesSection() {
   // through it advances the case. The arrows and dots still work — they
   // scroll to the matching offset rather than fighting the scroll position,
   // so the two controls can never disagree.
+  const inView = useInView(headingRef, { once: true, margin: "-80px" });
+  const [active, setActive] = useState(0);
+  const [direction, setDirection] = useState(1);
+
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
   const caseIndex = useTransform(scrollYProgress, [0.06, 0.94], [0, features.length - 0.01]);
 
@@ -86,10 +90,6 @@ export default function FeaturesSection() {
     const frac = 0.06 + ((i + 0.5) / features.length) * 0.88;
     window.scrollTo({ top: el.offsetTop + span * frac, behavior: "smooth" });
   }
-  const inView = useInView(headingRef, { once: true, margin: "-80px" });
-  const [active, setActive] = useState(0);
-  const [direction, setDirection] = useState(1);
-
   function go(next: number) {
     scrollToCase(next);
   }

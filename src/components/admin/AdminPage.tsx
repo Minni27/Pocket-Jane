@@ -35,7 +35,12 @@ export default function AdminPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  // The rule targets derived state recomputed in an effect. This is a
+  // mount-time fetch of server data — the setState happens in the awaited
+  // callback, which is the "subscribe to an external system" case the rule
+  // documents as legitimate but cannot distinguish statically.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { void refresh(); }, [refresh]);
 
   return (
     <div className="flex flex-col flex-1 px-4 py-8 max-w-4xl mx-auto w-full gap-8">

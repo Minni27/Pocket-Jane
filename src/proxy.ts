@@ -1,14 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { env } from "@/lib/env";
 
+// Routes reachable without a session. Everything else redirects to /login.
 const PUBLIC_ROUTES = ["/login", "/auth"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
@@ -37,6 +39,8 @@ export async function middleware(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    // Only ever a pathname from this request — never a caller-supplied value,
+    // and the login page re-validates it before navigating.
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }

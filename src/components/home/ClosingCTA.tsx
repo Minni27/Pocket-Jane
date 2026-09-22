@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
+import { useMounted } from "@/lib/use-mounted";
+import { motion, useInView } from "framer-motion";
 import { SECTION_VH } from "./scrollMap";
 import { useTheme } from "next-themes";
 import Link from "next/link";
@@ -10,8 +11,7 @@ export default function ClosingCTA() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
   const isDark = mounted && theme === "dark";
 
   return (
@@ -55,7 +55,7 @@ export default function ClosingCTA() {
           opacity: isDark ? 0.2 : 0.15,
           marginBottom: "16px",
           userSelect: "none",
-        }}>"</div>
+        }}>&ldquo;</div>
 
         <p style={{
           fontFamily: "var(--font-playfair), serif",

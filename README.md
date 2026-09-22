@@ -11,6 +11,20 @@ Two themes: light is Jane (blue), dark is Red John (red).
 - **Gemini** — vision + reasoning for the profiling
 - **pdfjs-dist** — PDF text extraction, in the browser
 
+## Commands
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server |
+| `npm run verify` | Typecheck, lint, and tests — the same checks CI runs |
+| `npm test` | Unit tests (vitest) |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint |
+| `npm run build` | Production build |
+
+Run `npm run verify` before pushing. CI runs the same four steps plus the
+build on every push and pull request, free on GitHub Actions.
+
 ## Setup
 
 ### 1. Install
@@ -42,6 +56,11 @@ Run the whole of `supabase-schema.sql` in the Supabase SQL editor. It creates:
 - `library_books` — a grouped view, one row per book
 - `search_book_chunks()` — the ranked passage lookup used during analysis
 
+It also adds the constraints that keep bad data out: confidence must be
+0–100, the jsonb columns must be arrays, passages and notes are length-capped,
+and a unique index stops a retried upload batch inserting the same passage
+twice. An existing database gets these from `migrations/002-hardening.sql`.
+
 ### 4. Run
 
 ```bash
@@ -50,7 +69,9 @@ npm run dev
 
 ## How it works
 
-**Analysis.** Your input goes to Gemini with a prompt that forbids hedging and requires every claim to be anchored to a named observable. The route tries `gemini-3.8-flash` first and falls back through `gemini-2.5-flash` to `gemini-3.1-flash-lite`, since the newer models return 503 under load.
+**Analysis.** Your input goes to Gemini with a prompt that forbids hedging and requires every claim to be anchored to a named observable. The route tries `gemini-3.8-flash` first and falls back through `gemini-2.5-flash` to `gemini-3.1-flash-lite`, since the newer models return 503 under load. All three attempts share one 52-second budget, so the chain cannot overrun the 60-second function limit and get killed mid-response.
+
+Every model response is validated against a schema before it is stored. A model that returns the wrong shape counts as a failed attempt and the next model is tried — an unusable profile never reaches the database, where it would have failed a constraint and left a reading with no id that could never be corrected.
 
 **The library.** Dropped PDFs are parsed in the browser, split into ~1200-character passages, and stored. At analysis time, behavioural cues in your input are mapped to the vocabulary the books actually use — *"fiddled with his glass"* becomes `pacifying self-soothing displacement` — and the best-ranked passages are injected into the prompt. Searching the books with raw surface words matches incidental mentions rather than the concepts, which is why the mapping exists.
 
@@ -59,6 +80,38 @@ Passages below a relevance floor are dropped entirely. Giving the model a bad pa
 **Calibration.** When you log an outcome you can write what the read got wrong. Those corrections are fed into later prompts so the model can avoid repeating the same class of mistake. It also compares confidence on wrong reads against right ones and calls out systematic overconfidence. There is no fine-tuning — the learning is entirely in-context.
 
 Name PDFs `Title - Author.pdf` so both fields parse correctly. Scanned PDFs with no text layer will fail, since there is no OCR step.
+
+## Limits
+
+Set in `src/lib/limits.ts` and enforced by the API and the database, not just
+the browser. They are sized for the free tiers: Supabase's 500MB and Gemini's
+shared daily quota.
+
+| Limit | Value |
+|---|---|
+| Books per account | 7 |
+| Passages per book | 4,000 |
+| Passages per account | 30,000 (database trigger) |
+| PDF size | 60MB |
+| Image size | 5MB |
+| Description | 4,000 characters |
+| Readings per account per hour | 20 |
+| Readings across all accounts per day | 400 |
+
+The daily cap is a circuit breaker on the Gemini free tier, which is a shared
+quota — without it, one account looping requests exhausts the day for everyone.
+It needs `SUPABASE_SERVICE_ROLE_KEY` to count across accounts, and is skipped
+with a logged warning if that key is not set.
+
+## Security and privacy
+
+[SECURITY.md](SECURITY.md) — what protects the data, what the headers do, and
+what is deliberately not defended against.
+
+[PRIVACY.md](PRIVACY.md) — what is stored, what leaves the deployment, and the
+legal questions to settle before this is offered to anyone beyond people who
+know exactly what it does. The captured photograph is **not** stored; only
+your typed description and the generated profile are.
 
 ## Deploying
 

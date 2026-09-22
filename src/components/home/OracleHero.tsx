@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef } from "react";
+import { useMounted } from "@/lib/use-mounted";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import HeroMark from "./HeroMark";
 import { useTheme } from "next-themes";
@@ -9,8 +10,7 @@ import Link from "next/link";
 export default function OracleHero() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
 
   // Default to light (Jane) before mount
   const isLight = !mounted || theme === "light";

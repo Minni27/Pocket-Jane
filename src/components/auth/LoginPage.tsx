@@ -4,16 +4,21 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button, Icon, Input, Label } from "@/components/ui";
+import { authErrorMessage, safeRedirect } from "@/lib/safe-redirect";
 
 export default function LoginPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/";
+  // Validated, not trusted: ?next=//evil.com would otherwise send the user
+  // off-site the moment they sign in.
+  const next = safeRedirect(params.get("next"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(params.get("error"));
+  // Mapped from a code, never rendered from the query string, so a crafted
+  // link cannot put its own text in the app's error box.
+  const [error, setError] = useState<string | null>(authErrorMessage(params.get("error")));
   const [notice, setNotice] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {

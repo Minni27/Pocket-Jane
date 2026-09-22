@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useMounted } from "@/lib/use-mounted";
 import { supabase } from "@/lib/supabase";
 
 const links = [
@@ -49,10 +50,9 @@ export default function Navigation() {
   const pathname  = usePathname();
   const router    = useRouter();
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const [signedIn, setSignedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {

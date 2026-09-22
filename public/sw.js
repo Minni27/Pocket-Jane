@@ -7,8 +7,13 @@
 // a page rendered for a different account. Only immutable build assets and
 // the icons are served from cache.
 
-const CACHE = "pocket-jane-v1";
+const CACHE = "pocket-jane-v2";
 const PRECACHE = ["/icon-192.png", "/icon-512.png", "/apple-icon.png"];
+
+// The pdf.js worker is a 1.2MB immutable vendor file served from this origin
+// (see SECURITY.md). Cached on first use rather than precached, so installing
+// the app does not pull it down for someone who never uploads a book.
+const CACHE_ON_USE = ["/pdf.worker.min.mjs"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -35,7 +40,9 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/auth/")) return;
 
   const isImmutable =
-    url.pathname.startsWith("/_next/static/") || PRECACHE.includes(url.pathname);
+    url.pathname.startsWith("/_next/static/") ||
+    PRECACHE.includes(url.pathname) ||
+    CACHE_ON_USE.includes(url.pathname);
 
   if (isImmutable) {
     event.respondWith(

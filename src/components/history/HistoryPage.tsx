@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Icon, Mark } from "@/components/ui";
+import { LIMITS } from "@/lib/limits";
+import type { OutcomeUpdate } from "@/lib/database.types";
 
 type Outcome = "success" | "partial" | "miss";
 
@@ -68,9 +70,8 @@ export default function HistoryPage() {
     setLogging(null);
     setNoting(null);
     setUpdateError(null);
-    const payload = { outcome, outcome_note: note.trim() || null };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await supabase.from("analyses").update(payload as any).eq("id", id);
+    const payload: OutcomeUpdate = { outcome, outcome_note: note.trim() || null };
+    const { error } = await supabase.from("analyses").update(payload).eq("id", id);
     if (error) {
       console.error("[history] update error:", error.message);
       setUpdateError(`Failed to save: ${error.message}`);
@@ -381,6 +382,9 @@ function NoteEditor({
       </label>
       <textarea
         value={note}
+        // Matches the analyses_note_len constraint, so the save cannot
+        // fail on a length the UI allowed.
+        maxLength={LIMITS.OUTCOME_NOTE_CHARS}
         onChange={(e) => setNote(e.target.value)}
         placeholder={meta.placeholder}
         rows={3}
