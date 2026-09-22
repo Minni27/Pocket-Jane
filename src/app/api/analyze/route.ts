@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+// A reading takes ~30s once library passages and calibration are in the
+// prompt. Without this the platform default (10s on Vercel Hobby) kills
+// every request in production while everything looks fine locally.
+export const maxDuration = 60;
+
+const MAX_IMAGE_BYTES   = 5 * 1024 * 1024;  // decoded size of the base64 image
+const MAX_TEXT_CHARS    = 4000;
+const GEMINI_TIMEOUT_MS = 45_000;
+const RATE_LIMIT_PER_HOUR = 20;
+
 // Tried in order — these models are intermittently overloaded, so fall
 // through to the next rather than failing the whole request.
 const MODELS = ["gemini-3.8-flash", "gemini-2.5-flash", "gemini-3.1-flash-lite"];
@@ -229,6 +239,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Provide an image or description." }, { status: 400 });
     }
 
+    if (text && text.length > MAX_TEXT_CHARS) {
+      return NextResponse.json(
+        { error: `Description is too long — keep it under ${MAX_TEXT_CHARS} characters.` },
+        { status: 413 }
+      );
+    }
+
+    if (image) {
+      // base64 inflates by ~4/3, so compare against the decoded size
+      const b64 = image.includes(",") ? image.slice(image.indexOf(",") + 1) : image;
+      if (Math.floor(b64.length * 0.75) > MAX_IMAGE_BYTES) {
+        return NextResponse.json(
+          { error: `That image is too large — keep it under ${MAX_IMAGE_BYTES / 1024 / 1024}MB.` },
+          { status: 413 }
+        );
+      }
+    }
+
+    // Rate limit by counting this user's recent readings. Every successful
+    // analysis writes a row, so no separate counter table is needed — and a
+    // Postgres count stays correct across serverless instances, which an
+    // in-memory counter would not.
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count: recent } = await supabase
+      .from("analyses")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", since);
+
+    if ((recent ?? 0) >= RATE_LIMIT_PER_HOUR) {
+      return NextResponse.json(
+        { error: `You've hit the limit of ${RATE_LIMIT_PER_HOUR} readings an hour. Try again shortly.` },
+        { status: 429 }
+      );
+    }
+
     const apiKey = process.env.GEMINI_API_KEY!;
     console.log("[analyze] key prefix:", apiKey?.slice(0, 8), "models:", MODELS.join(" → "));
 
@@ -270,11 +316,23 @@ export async function POST(req: NextRequest) {
     let lastErr = "";
 
     for (const model of MODELS) {
-      const res = await fetch(`${modelUrl(model)}?key=${apiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-      });
+      // Without a signal a hung Gemini connection holds the function open
+      // until the platform kills it, spending the whole budget on one call.
+      let res: Response;
+      try {
+        res = await fetch(`${modelUrl(model)}?key=${apiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+          signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+        });
+      } catch (e) {
+        lastErr = e instanceof Error && e.name === "TimeoutError"
+          ? `${model} timed out after ${GEMINI_TIMEOUT_MS / 1000}s`
+          : `${model} unreachable`;
+        console.warn("[analyze]", lastErr);
+        continue;
+      }
       const json = await res.json();
 
       if (res.ok) {

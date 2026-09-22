@@ -60,6 +60,15 @@ export default function AnalyzePage() {
     }
   }
 
+  // Surfaced on the button after 15s so a long wait reads as progress
+  // rather than a hang.
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!isAnalyzing) { setElapsed(0); return; }
+    const t = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(t);
+  }, [isAnalyzing]);
+
   const canAnalyze = mode === "camera" ? !!snapshot : !!text.trim();
 
   return (
@@ -179,7 +188,7 @@ export default function AnalyzePage() {
             {isAnalyzing ? (
               <>
                 <AnalyzingSpinner />
-                <span style={{ color: isLight ? "#e8f0ff" : "#f0ead8" }}>Reading…</span>
+                <span style={{ color: isLight ? "#e8f0ff" : "#f0ead8" }}>Reading{elapsed >= 15 ? ` · ${elapsed}s` : "…"}</span>
               </>
             ) : (
               <span style={{ color: isLight ? "#e8f0ff" : "#f0ead8" }}>Analyze</span>

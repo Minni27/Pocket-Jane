@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/types/profile";
 
@@ -18,10 +18,72 @@ export default function AnalysisOutput({ isLoading, result }: Props) {
 }
 
 /* ─── Loading skeleton ──────────────────────────────────────── */
+
+// A reading takes ~30s. A single frozen "Reading…" reads as a hang, and
+// people refresh — which throws away the result and spends another Gemini
+// call. Naming the stage as it happens makes the same wait legible.
+function ProgressNarration() {
+  const [stage, setStage] = useState(0);
+  const [titles, setTitles] = useState<string[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("library_books")
+      .select("book_title")
+      .then(({ data }) => setTitles(
+        ((data ?? []) as { book_title: string }[]).map((b) => b.book_title)
+      ));
+  }, []);
+
+  const steps = useMemo(() => {
+    const book = titles.length
+      ? titles[Math.floor(Math.random() * titles.length)]
+      : null;
+    return [
+      { at: 0,     text: "Taking in the details…" },
+      { at: 4500,  text: "Searching your library…" },
+      { at: 10000, text: book ? `Cross-referencing ${book}…` : "Cross-referencing the frameworks…" },
+      { at: 16000, text: "Weighing your past corrections…" },
+      { at: 22000, text: "Committing to a read…" },
+      { at: 30000, text: "Almost there — the model is still thinking…" },
+    ];
+  }, [titles]);
+
+  useEffect(() => {
+    const timers = steps.map((s, i) =>
+      setTimeout(() => setStage(i), s.at)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [steps]);
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "10px", minHeight: "20px" }}>
+      <span style={{
+        width: "6px", height: "6px", borderRadius: "50%",
+        background: "var(--accent)", flexShrink: 0,
+        animation: "pulse 1.4s ease-in-out infinite",
+      }} />
+      <span
+        key={stage}
+        style={{
+          fontFamily: "var(--font-inter), sans-serif",
+          fontSize: "13px", fontWeight: 300, letterSpacing: "0.02em",
+          color: "var(--text-muted)",
+          animation: "fadeIn 0.5s ease",
+        }}
+      >
+        {steps[stage].text}
+      </span>
+      <style>{`@keyframes pulse { 0%,100% { opacity:.25; transform:scale(.8);} 50% { opacity:1; transform:scale(1);} }`}</style>
+    </div>
+  );
+}
+
 function LoadingSkeleton() {
   return (
     <div className="animate-fade-in flex flex-col gap-4">
       <div className="divider-ornate">◈ Reading</div>
+      <ProgressNarration />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="card p-5" style={{ height: "160px" }}>

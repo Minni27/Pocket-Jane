@@ -4,17 +4,6 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { supabase } from "@/lib/supabase";
 
-const suggestedBooks = [
-  { author: "Robert Cialdini",  title: "Influence",                 tag: "Persuasion"      },
-  { author: "Joe Navarro",      title: "What Every Body Is Saying", tag: "Body Language"   },
-  { author: "Daniel Kahneman", title: "Thinking, Fast and Slow",   tag: "Cognition"       },
-  { author: "Paul Ekman",       title: "Emotions Revealed",         tag: "Microexpressions"},
-  { author: "Chris Voss",       title: "Never Split the Difference",tag: "Negotiation"     },
-  { author: "Robert Greene",    title: "The 48 Laws of Power",      tag: "Strategy"        },
-  { author: "Jack Schafer",     title: "The Like Switch",           tag: "Rapport"         },
-  { author: "Richard Thaler",   title: "Nudge",                     tag: "Behavioral Econ" },
-];
-
 type UploadStatus = {
   id: string;
   name: string;
@@ -22,6 +11,10 @@ type UploadStatus = {
   status: "queued" | "extracting" | "ingesting" | "done" | "error";
   detail?: string;
 };
+
+const MAX_FILE_BYTES = 60 * 1024 * 1024; // 60MB — scanned-ish book PDFs run large
+const MAX_BOOKS      = 7;
+const MAX_CHUNKS_PER_BOOK = 4000;        // ~4.8M characters; guards against runaway PDFs
 
 const CHUNK_SIZE   = 1200; // characters per chunk
 const CHUNK_BATCH  = 200;  // chunks per /api/ingest request (keeps payloads ~250KB)
@@ -33,6 +26,7 @@ function chunkText(text: string): string[] {
   while (i < text.length) {
     const chunk = text.slice(i, i + CHUNK_SIZE).trim();
     if (chunk.length > 120) chunks.push(chunk);
+    if (chunks.length >= MAX_CHUNKS_PER_BOOK) break;
     i += CHUNK_SIZE - CHUNK_OVERLAP;
   }
   return chunks;
@@ -74,7 +68,7 @@ async function ingestChunks(
     const res = await fetch("/api/ingest", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookTitle, author, chunks: batch }),
+      body: JSON.stringify({ bookTitle, author, chunks: batch, startIndex: b * CHUNK_BATCH }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -104,7 +98,9 @@ export default function LibraryPage() {
   const pending      = useRef<{ file: File; id: string }[]>([]);
   const queueRunning = useRef(false);
   const uploadsRef   = useRef<UploadStatus[]>([]);
+  const booksRef     = useRef<IndexedBook[]>([]);
   useEffect(() => { uploadsRef.current = uploads; }, [uploads]);
+  useEffect(() => { booksRef.current = books; }, [books]);
 
   const refreshBooks = useCallback(async () => {
     // library_books is a grouped view — one row per book, so no 1000-row cap issues
@@ -177,14 +173,39 @@ export default function LibraryPage() {
     const pdfs = accepted.filter((f) => f.type === "application/pdf");
     const fresh: UploadStatus[] = [];
 
+    // Titles already held, plus anything queued this drop, so the cap counts
+    // the whole batch rather than letting 7 files through one at a time.
+    const titles = new Set(booksRef.current.map((b) => b.book_title));
+
     for (const file of pdfs) {
       const name = file.name;
+      const id = `${name}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
       const alreadyQueued =
         pending.current.some((p) => p.file.name === name) ||
         uploadsRef.current.some((u) => u.name === name && u.status !== "error" && u.status !== "done");
       if (alreadyQueued) continue;
 
-      const id = `${name}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      // Reject oversized files before reading them — extractPdfText pulls the
+      // whole thing into memory as an ArrayBuffer.
+      if (file.size > MAX_FILE_BYTES) {
+        fresh.push({
+          id, name, progress: 0, status: "error",
+          detail: `Too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Limit is ${MAX_FILE_BYTES / 1024 / 1024}MB.`,
+        });
+        continue;
+      }
+
+      const { title } = parseFilename(name);
+      if (!titles.has(title) && titles.size >= MAX_BOOKS) {
+        fresh.push({
+          id, name, progress: 0, status: "error",
+          detail: `Library is full (${MAX_BOOKS} books). Remove one first.`,
+        });
+        continue;
+      }
+      titles.add(title);
+
       pending.current.push({ file, id });
       fresh.push({ id, name, progress: 0, status: "queued", detail: "Waiting…" });
     }
@@ -236,7 +257,7 @@ export default function LibraryPage() {
           {isDragActive ? "Release to ingest" : "Drop your books here"}
         </p>
         <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-ghost)" }}>
-          PDF only · Multiple files accepted · Jane will cite these in every reading
+          PDF only · up to {MAX_BOOKS} books · {MAX_FILE_BYTES / 1024 / 1024}MB each
         </p>
       </div>
 
@@ -305,8 +326,8 @@ export default function LibraryPage() {
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "12px" }}>
           <SectionLabel>In Your Library</SectionLabel>
           {books.length > 0 && (
-            <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: "var(--gold-dim)", flexShrink: 0 }}>
-              {books.length} {books.length === 1 ? "book" : "books"} ·{" "}
+            <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: books.length >= MAX_BOOKS ? "var(--accent)" : "var(--gold-dim)", flexShrink: 0 }}>
+              {books.length} of {MAX_BOOKS} books ·{" "}
               {books.reduce((s, b) => s + b.chunk_count, 0).toLocaleString()} passages
             </span>
           )}
@@ -371,39 +392,6 @@ export default function LibraryPage() {
         )}
       </div>
 
-      {/* Suggested reading */}
-      <div className="flex flex-col gap-4">
-        <SectionLabel>Suggested Reading</SectionLabel>
-        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-ghost)", marginTop: "-8px" }}>
-          The books Jane was designed around. Find PDFs of these for best results.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {suggestedBooks.map((b) => (
-            <div
-              key={b.title}
-              className="card p-4 flex items-center gap-4"
-              style={{ transition: "border-color 0.2s ease" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border-gold)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = ""; }}
-            >
-              <div style={{ width: "36px", height: "44px", borderRadius: "4px", background: "var(--raised)", border: "1px solid var(--border-gold)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "var(--gold-dim)" }}>
-                ◈
-              </div>
-              <div className="flex-1 min-w-0">
-                <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "16px", fontWeight: 500, color: "var(--text-primary)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {b.title}
-                </p>
-                <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: "var(--text-muted)" }}>
-                  {b.author}
-                </p>
-              </div>
-              <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "0.08em", color: "var(--gold-dim)", background: "var(--raised)", border: "1px solid var(--border-gold)", borderRadius: "4px", padding: "2px 8px", whiteSpace: "nowrap", flexShrink: 0 }}>
-                {b.tag}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
