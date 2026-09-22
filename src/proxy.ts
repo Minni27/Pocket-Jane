@@ -70,6 +70,11 @@ export const config = {
     // The manifest and service worker are fetched before anyone signs in —
     // redirecting them to /login hands the browser an HTML page where it
     // expects JSON/JS, and the install prompt never appears.
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    //
+    // pdf.worker.min.mjs is here for the same reason: pdf.js fetches it as a
+    // script, and a redirect to /login hands it HTML to execute, so library
+    // uploads fail with a parse error that names neither the session nor the
+    // worker. It carries no user data, so there is nothing to protect.
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|pdf.worker.min.mjs|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

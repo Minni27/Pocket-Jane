@@ -21,8 +21,13 @@ const csp = [
   "form-action 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "worker-src 'self' blob:",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  // No Google Fonts origins: next/font/google downloads the files at build
+  // time and serves them from /_next/static/media, so nothing is fetched
+  // from fonts.googleapis.com or fonts.gstatic.com at runtime — verified
+  // against the served HTML. If a raw <link> to Google Fonts is ever added,
+  // it will be blocked, and the fix is to use next/font instead.
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
   // blob:/data: cover camera captures and PDF-rendered images
   "img-src 'self' blob: data:",
   "media-src 'self' blob:",
