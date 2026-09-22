@@ -33,7 +33,7 @@ export default function Mark({
       style={{
         // The seeded hue rides on this subtree only — every --mark below
         // resolves against it, and nothing outside inherits the shift.
-        ["--mark-shift" as string]: `${s.shift}deg`,
+        ["--mark-shift" as string]: `${s.shift}`,
         display: "block", overflow: "visible",
       }}
     >

@@ -36,9 +36,10 @@
 
   --measure: 70ch;
 
-  /* Seeded hue offset. Components overwrite this per reading within
-     a clamped ±16deg; never wider, or the mark leaves the theme. */
-  --mark-shift: 0deg;
+  /* Seeded hue offset, per reading, clamped to ±16. Unitless on purpose:
+     inside hsl(from ...) the `h` channel resolves to a number, so adding a
+     deg value makes the calc invalid and the colour falls back to black. */
+  --mark-shift: 0;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-state: 150ms;

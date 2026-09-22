@@ -136,7 +136,7 @@ function ProfileResult({ profile }: { profile: Profile }) {
       <div
         className="card"
         style={{
-          ["--mark-shift" as string]: `${seedFrom(profile.archetype, profile.dominantTraits, profile.confidence).shift}deg`,
+          ["--mark-shift" as string]: `${seedFrom(profile.archetype, profile.dominantTraits, profile.confidence).shift}`,
           padding: "var(--s-5)",
           display: "flex", flexDirection: "column", gap: "var(--s-5)",
         }}
