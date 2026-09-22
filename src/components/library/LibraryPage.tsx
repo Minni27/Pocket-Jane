@@ -243,7 +243,7 @@ export default function LibraryPage() {
         }}
       >
         <input {...getInputProps()} />
-        <div style={{ color: isDragActive ? "var(--accent)" : "var(--text-ghost)", marginBottom: "var(--s-3)", display: "flex", justifyContent: "center", transition: "color var(--dur-state) ease" }}>
+        <div style={{ color: isDragActive ? "var(--accent-text)" : "var(--text-ghost)", marginBottom: "var(--s-3)", display: "flex", justifyContent: "center", transition: "color var(--dur-state) ease" }}>
           <Icon name={isDragActive ? "plus" : "books"} size={26} />
         </div>
         <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-title)", fontWeight: 500, color: isDragActive ? "var(--text-primary)" : "var(--text-dim)", margin: "0 0 var(--s-1)" }}>
@@ -272,13 +272,13 @@ export default function LibraryPage() {
                   <p style={{ flex: 1, minWidth: 0, fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", color: "var(--text-dim)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {u.name}
                   </p>
-                  <span className="tabular" style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: failed ? "var(--accent)" : "var(--text-ghost)", flexShrink: 0 }}>
+                  <span className="tabular" style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: failed ? "var(--accent-text)" : "var(--text-ghost)", flexShrink: 0 }}>
                     {done ? "Indexed" : failed ? "Failed" : u.status === "queued" ? "Queued" : `${u.progress}%`}
                   </span>
                 </div>
 
                 {u.detail && (
-                  <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: failed ? "var(--accent)" : "var(--text-ghost)", margin: "var(--s-2) 0 0", paddingLeft: "27px", lineHeight: 1.5 }}>
+                  <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: failed ? "var(--accent-text)" : "var(--text-ghost)", margin: "var(--s-2) 0 0", paddingLeft: "27px", lineHeight: 1.5 }}>
                     {u.detail}
                   </p>
                 )}
@@ -300,7 +300,7 @@ export default function LibraryPage() {
           {books.length > 0 && (
             <span className="tabular" style={{
               fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)",
-              color: books.length >= MAX_BOOKS ? "var(--accent)" : "var(--text-muted)", flexShrink: 0,
+              color: books.length >= MAX_BOOKS ? "var(--accent-text)" : "var(--text-muted)", flexShrink: 0,
             }}>
               {books.length}/{MAX_BOOKS} · {books.reduce((a, b) => a + b.chunk_count, 0).toLocaleString()} passages
             </span>

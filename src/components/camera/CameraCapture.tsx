@@ -45,14 +45,14 @@ export default function CameraCapture({ onSnapshot, snapshot }: Props) {
 
   if (snapshot) {
     return (
-      <div className="relative rounded-xl overflow-hidden" style={{ aspectRatio: "4/3" }}>
+      <div className="relative overflow-hidden"  style={{ aspectRatio: "3/2", borderRadius: "var(--r-card)" }}>
         <img src={snapshot} alt="Captured snapshot" className="w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ border: "1px solid var(--border-accent)", borderRadius: "12px", boxShadow: "inset 0 0 40px rgba(0,0,0,0.2)" }} />
+        <div className="absolute inset-0" style={{ border: "1px solid var(--border-accent)", borderRadius: "var(--r-card)", boxShadow: "inset 0 0 40px rgba(0,0,0,0.2)" }} />
         <CornerBrackets />
 
         <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-md px-3 py-1.5" style={{ background: "rgba(0,0,0,0.7)", border: "1px solid var(--border-accent)" }}>
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--accent)", boxShadow: "0 0 4px var(--accent)" }} />
-          <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "var(--text-dim)", letterSpacing: "0.06em" }}>CAPTURED</span>
+          <span style={{ fontFamily: "var(--font-inter)", fontSize: "var(--t-meta)", color: "var(--text-dim)", letterSpacing: "0.06em" }}>CAPTURED</span>
         </div>
 
         <button
@@ -61,7 +61,7 @@ export default function CameraCapture({ onSnapshot, snapshot }: Props) {
           style={{
             background: "rgba(0,0,0,0.7)", border: "1px solid var(--border)",
             color: "var(--text-muted)", fontFamily: "var(--font-inter)",
-            fontSize: "11px", cursor: "pointer", letterSpacing: "0.04em",
+            fontSize: "var(--t-meta)", cursor: "pointer", letterSpacing: "0.04em",
           }}
         >
           Retake
@@ -71,7 +71,7 @@ export default function CameraCapture({ onSnapshot, snapshot }: Props) {
   }
 
   return (
-    <div className="relative rounded-xl overflow-hidden" style={{ aspectRatio: "4/3", background: "var(--surface)", border: "1px solid var(--border)" }}>
+    <div className="relative overflow-hidden"  style={{ aspectRatio: "3/2", borderRadius: "var(--r-card)", background: "var(--surface)", border: "1px solid var(--border)" }}>
       {!cameraError ? (
         <>
           <Webcam
@@ -124,7 +124,7 @@ export default function CameraCapture({ onSnapshot, snapshot }: Props) {
           {isLive && (
             <div className="absolute top-3 left-3 flex items-center gap-2 rounded-md px-3 py-1.5" style={{ background: "rgba(0,0,0,0.7)", border: "1px solid var(--border-accent)" }}>
               <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "var(--accent)", boxShadow: "0 0 4px var(--accent)" }} />
-              <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "var(--text-dim)", letterSpacing: "0.08em" }}>LIVE</span>
+              <span style={{ fontFamily: "var(--font-inter)", fontSize: "var(--t-meta)", color: "var(--text-dim)", letterSpacing: "0.08em" }}>LIVE</span>
             </div>
           )}
 
@@ -157,8 +157,8 @@ function CameraError() {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
       <Icon name="camera" size={30} style={{ opacity: 0.35, color: "var(--text-muted)" }} />
-      <p style={{ fontFamily: "var(--font-inter)", fontSize: "13px", color: "var(--text-muted)", textAlign: "center", maxWidth: "200px" }}>
-        Camera access denied. Use the <strong style={{ color: "var(--accent)" }}>Describe</strong> mode instead.
+      <p style={{ fontFamily: "var(--font-inter)", fontSize: "var(--t-ui)", color: "var(--text-muted)", textAlign: "center", maxWidth: "200px" }}>
+        Camera access denied. Use the <strong style={{ color: "var(--accent-text)" }}>Describe</strong> mode instead.
       </p>
     </div>
   );

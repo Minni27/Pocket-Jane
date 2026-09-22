@@ -50,7 +50,7 @@ export default function ClosingCTA() {
         <div style={{
           fontFamily: "var(--font-playfair), serif",
           fontSize: "80px", lineHeight: 0.5,
-          color: "var(--accent)",
+          color: "var(--accent-text)",
           opacity: isDark ? 0.2 : 0.15,
           marginBottom: "16px",
           userSelect: "none",

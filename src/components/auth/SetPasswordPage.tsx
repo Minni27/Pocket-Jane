@@ -45,15 +45,15 @@ export default function SetPasswordPage() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center px-4 py-16">
       <div style={{ width: "100%", maxWidth: "380px" }}>
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+        <div style={{ textAlign: "center", marginBottom: "var(--s-6)" }}>
           <h1 style={{
             fontFamily: "var(--font-playfair), serif",
             fontSize: "clamp(1.6rem, 4.5vw, 2.1rem)", fontWeight: 600,
-            color: "var(--text-primary)", lineHeight: 1.15, marginBottom: "8px",
+            color: "var(--text-primary)", lineHeight: 1.15, marginBottom: "var(--s-2)",
           }}>
             Choose a password
           </h1>
-          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-muted)" }}>
+          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", fontWeight: 300, color: "var(--text-muted)" }}>
             {email ? <>Setting up <span style={{ color: "var(--text-dim)" }}>{email}</span></> : "Finish setting up your account."}
           </p>
         </div>
@@ -64,10 +64,10 @@ export default function SetPasswordPage() {
 
           {error && (
             <p style={{
-              fontFamily: "var(--font-inter), sans-serif", fontSize: "12px",
-              color: "var(--accent)", lineHeight: 1.5,
+              fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)",
+              color: "var(--accent-text)", lineHeight: 1.5,
               background: "var(--surface)", border: "1px solid var(--border-accent)",
-              borderRadius: "8px", padding: "10px 12px", margin: 0,
+              borderRadius: "var(--r-input)", padding: "var(--s-3) var(--s-3)", margin: 0,
             }}>
               {error}
             </p>
@@ -77,12 +77,12 @@ export default function SetPasswordPage() {
             type="submit"
             disabled={busy || !password || !confirm}
             style={{
-              marginTop: "4px", padding: "13px", borderRadius: "8px",
+              marginTop: "var(--s-1)", padding: "13px", borderRadius: "var(--r-input)",
               border: "1px solid var(--border-accent)",
               background: "linear-gradient(135deg, var(--accent), var(--accent-deep))",
               color: "#fff",
               fontFamily: "var(--font-playfair), serif",
-              fontSize: "17px", fontWeight: 500, letterSpacing: "0.03em",
+              fontSize: "var(--t-body)", fontWeight: 500, letterSpacing: "0.03em",
               cursor: busy || !password || !confirm ? "not-allowed" : "pointer",
               opacity: busy || !password || !confirm ? 0.5 : 1,
               boxShadow: busy ? "none" : "var(--shadow-glow)",
@@ -104,8 +104,8 @@ function PasswordField({
     <div>
       <label style={{
         display: "block", fontFamily: "var(--font-inter), sans-serif",
-        fontSize: "10px", fontWeight: 600, letterSpacing: "0.12em",
-        textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "7px",
+        fontSize: "var(--t-micro)", fontWeight: 600, letterSpacing: "0.12em",
+        textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "var(--s-2)",
       }}>
         {label}
       </label>
@@ -119,9 +119,9 @@ function PasswordField({
         style={{
           width: "100%",
           background: "var(--surface)", border: "1px solid var(--border)",
-          borderRadius: "8px", outline: "none", padding: "11px 13px",
+          borderRadius: "var(--r-input)", outline: "none", padding: "11px 13px",
           fontFamily: "var(--font-inter), sans-serif",
-          fontSize: "14px", fontWeight: 300,
+          fontSize: "var(--t-ui)", fontWeight: 300,
           color: "var(--text-primary)", caretColor: "var(--accent)",
           transition: "border-color 0.2s ease",
         }}

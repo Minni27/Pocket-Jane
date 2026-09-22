@@ -43,12 +43,12 @@ export default function AdminPage() {
       {toast && (
         <div style={{
           position: "fixed", bottom: "32px", left: "50%", transform: "translateX(-50%)",
-          zIndex: 999, padding: "14px 28px", borderRadius: "10px",
+          zIndex: 999, padding: "var(--s-4) var(--s-5)", borderRadius: "var(--r-card)",
           background: "var(--surface)", border: "1px solid var(--border)",
-          boxShadow: "0 0 32px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", gap: "10px",
+          boxShadow: "0 0 32px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", gap: "var(--s-3)",
         }}>
           <Icon name="check" size={15} style={{ color: "var(--signal)" }} />
-          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "14px", color: "var(--text-primary)" }}>{toast}</span>
+          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", color: "var(--text-primary)" }}>{toast}</span>
         </div>
       )}
 
@@ -63,9 +63,9 @@ export default function AdminPage() {
 
       {error && (
         <div style={{
-          padding: "12px 16px", borderRadius: "8px", background: "var(--surface)",
-          border: "1px solid var(--border-accent)", color: "var(--accent)",
-          fontFamily: "var(--font-inter), sans-serif", fontSize: "13px",
+          padding: "var(--s-3) var(--s-4)", borderRadius: "var(--r-input)", background: "var(--surface)",
+          border: "1px solid var(--border-accent)", color: "var(--accent-text)",
+          fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)",
         }}>
           {error}
         </div>
@@ -140,7 +140,7 @@ function AddUserForm({ onDone }: { onDone: (msg?: string) => void }) {
           <div className="flex gap-2">
             <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="at least 8 characters" />
             <button type="button" onClick={generate}
-              style={{ flexShrink: 0, padding: "0 12px", borderRadius: "8px", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer", whiteSpace: "nowrap" }}
+              style={{ flexShrink: 0, padding: "0 12px", borderRadius: "var(--r-input)", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", cursor: "pointer", whiteSpace: "nowrap" }}
             >Generate</button>
           </div>
         </div>
@@ -152,37 +152,37 @@ function AddUserForm({ onDone }: { onDone: (msg?: string) => void }) {
           {["member", "admin"].map((r) => (
             <button key={r} type="button" onClick={() => setRole(r)}
               style={{
-                padding: "7px 16px", borderRadius: "7px", cursor: "pointer",
-                fontFamily: "var(--font-inter), sans-serif", fontSize: "11px",
+                padding: "var(--s-2) var(--s-4)", borderRadius: "var(--r-input)", cursor: "pointer",
+                fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)",
                 fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase",
                 background: role === r ? "var(--raised)" : "transparent",
                 border: `1px solid ${role === r ? "var(--border-accent)" : "var(--border)"}`,
-                color: role === r ? "var(--accent)" : "var(--text-muted)",
+                color: role === r ? "var(--accent-text)" : "var(--text-muted)",
               }}
             >{r}</button>
           ))}
         </div>
-        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: "var(--text-ghost)", marginTop: "6px" }}>
+        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: "var(--text-ghost)", marginTop: "var(--s-2)" }}>
           Admins can create and delete users. Members only get their own workspace.
         </p>
       </div>
 
       {err && (
-        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", color: "var(--accent)", background: "var(--surface)", border: "1px solid var(--border-accent)", borderRadius: "8px", padding: "10px 12px", margin: 0 }}>
+        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: "var(--accent-text)", background: "var(--surface)", border: "1px solid var(--border-accent)", borderRadius: "var(--r-input)", padding: "var(--s-3) var(--s-3)", margin: 0 }}>
           {err}
         </p>
       )}
 
-      <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: "var(--text-ghost)", margin: 0, lineHeight: 1.6 }}>
+      <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: "var(--text-ghost)", margin: 0, lineHeight: 1.6 }}>
         No email is sent. Copy the password and pass it on yourself — it is shown once, after you create the account.
       </p>
 
       <div className="flex gap-2 flex-wrap">
         <button type="submit" disabled={busy || !email || !password}
-          style={{ padding: "9px 22px", borderRadius: "8px", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", cursor: busy ? "not-allowed" : "pointer", opacity: busy || !email || !password ? 0.5 : 1 }}
+          style={{ padding: "9px 22px", borderRadius: "var(--r-input)", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 500, letterSpacing: "0.06em", cursor: busy ? "not-allowed" : "pointer", opacity: busy || !email || !password ? 0.5 : 1 }}
         >{busy ? "Creating…" : "Create user"}</button>
         <button type="button" onClick={() => onDone()}
-          style={{ padding: "9px 14px", borderRadius: "8px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", cursor: "pointer" }}
+          style={{ padding: "var(--s-3) var(--s-4)", borderRadius: "var(--r-input)", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", cursor: "pointer" }}
         >Cancel</button>
       </div>
     </form>
@@ -222,20 +222,20 @@ function UserRow({ user, onChanged }: { user: AdminUser; onChanged: (msg: string
     <div className="card p-4" style={{ borderColor: isAdmin ? "var(--border)" : undefined }}>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div style={{
-          width: "34px", height: "34px", borderRadius: "8px", flexShrink: 0,
+          width: "34px", height: "34px", borderRadius: "var(--r-input)", flexShrink: 0,
           background: "var(--raised)", border: `1px solid ${isAdmin ? "var(--border)" : "var(--border)"}`,
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "13px", color: isAdmin ? "var(--signal)" : "var(--text-muted)",
+          fontSize: "var(--t-ui)", color: isAdmin ? "var(--signal)" : "var(--text-muted)",
         }}>
           <Icon name={isAdmin ? "users" : "eye"} size={15} />
         </div>
 
         <div className="flex-1 min-w-0">
-          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "14px", color: "var(--text-primary)", marginBottom: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", color: "var(--text-primary)", marginBottom: "var(--s-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {user.email}
-            {user.isSelf && <span style={{ color: "var(--text-ghost)", fontSize: "11px" }}> — you</span>}
+            {user.isSelf && <span style={{ color: "var(--text-ghost)", fontSize: "var(--t-meta)" }}> — you</span>}
           </p>
-          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", color: "var(--text-ghost)" }}>
+          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: "var(--text-ghost)" }}>
             {user.role} · {user.analyses} reading{user.analyses === 1 ? "" : "s"} · {user.chunks.toLocaleString()} passages
             {user.lastSignInAt
               ? ` · last in ${new Date(user.lastSignInAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
@@ -245,12 +245,12 @@ function UserRow({ user, onChanged }: { user: AdminUser; onChanged: (msg: string
 
         <div className="flex gap-2 flex-shrink-0 flex-wrap">
           <button onClick={() => setResetting((r) => !r)}
-            style={{ padding: "5px 12px", borderRadius: "6px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer" }}
+            style={{ padding: "var(--s-2) var(--s-3)", borderRadius: "var(--r-input)", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", cursor: "pointer" }}
           >Set password</button>
           {!user.isSelf && (
             <button onClick={() => setConfirming(true)}
-              style={{ padding: "5px 12px", borderRadius: "6px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-ghost)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+              style={{ padding: "var(--s-2) var(--s-3)", borderRadius: "var(--r-input)", background: "transparent", border: "1px solid var(--border)", color: "var(--text-ghost)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", cursor: "pointer" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent-text)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-ghost)"; e.currentTarget.style.borderColor = "var(--border)"; }}
             >Delete</button>
           )}
@@ -258,33 +258,33 @@ function UserRow({ user, onChanged }: { user: AdminUser; onChanged: (msg: string
       </div>
 
       {resetting && (
-        <div className="flex gap-2 flex-wrap" style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--border)" }}>
+        <div className="flex gap-2 flex-wrap" style={{ marginTop: "var(--s-3)", paddingTop: "12px", borderTop: "1px solid var(--border)" }}>
           <input
             type="text" value={newPw} onChange={(e) => setNewPw(e.target.value)}
             placeholder="new password, at least 8 characters" autoFocus
-            style={{ flex: 1, minWidth: "200px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "7px", outline: "none", padding: "8px 11px", fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", color: "var(--text-primary)" }}
+            style={{ flex: 1, minWidth: "200px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r-input)", outline: "none", padding: "var(--s-2) var(--s-3)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", color: "var(--text-primary)" }}
           />
           <button onClick={savePassword} disabled={busy || newPw.length < 8}
-            style={{ padding: "8px 16px", borderRadius: "7px", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer", opacity: newPw.length < 8 ? 0.5 : 1 }}
+            style={{ padding: "var(--s-2) var(--s-4)", borderRadius: "var(--r-input)", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", cursor: "pointer", opacity: newPw.length < 8 ? 0.5 : 1 }}
           >Save</button>
           <button onClick={() => { setResetting(false); setNewPw(""); }}
-            style={{ padding: "8px 12px", borderRadius: "7px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer" }}
+            style={{ padding: "var(--s-2) var(--s-3)", borderRadius: "var(--r-input)", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", cursor: "pointer" }}
           >Cancel</button>
         </div>
       )}
 
       {confirming && (
-        <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--border-accent)" }}>
-          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", color: "var(--text-dim)", lineHeight: 1.6, marginBottom: "10px" }}>
+        <div style={{ marginTop: "var(--s-3)", paddingTop: "12px", borderTop: "1px solid var(--border-accent)" }}>
+          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", color: "var(--text-dim)", lineHeight: 1.6, marginBottom: "var(--s-3)" }}>
             Delete <strong style={{ color: "var(--text-primary)" }}>{user.email}</strong>? This also destroys their{" "}
             {user.analyses} reading{user.analyses === 1 ? "" : "s"} and {user.chunks.toLocaleString()} book passages. It cannot be undone.
           </p>
           <div className="flex gap-2 flex-wrap">
             <button onClick={del} disabled={busy}
-              style={{ padding: "8px 16px", borderRadius: "7px", background: "var(--surface)", border: "1px solid var(--border-accent)", color: "var(--accent)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, cursor: "pointer" }}
+              style={{ padding: "var(--s-2) var(--s-4)", borderRadius: "var(--r-input)", background: "var(--surface)", border: "1px solid var(--border-accent)", color: "var(--accent-text)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 500, cursor: "pointer" }}
             >{busy ? "Deleting…" : "Yes, delete permanently"}</button>
             <button onClick={() => setConfirming(false)}
-              style={{ padding: "8px 12px", borderRadius: "7px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer" }}
+              style={{ padding: "var(--s-2) var(--s-3)", borderRadius: "var(--r-input)", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", cursor: "pointer" }}
             >Cancel</button>
           </div>
         </div>

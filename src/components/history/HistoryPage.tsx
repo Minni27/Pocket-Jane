@@ -25,7 +25,7 @@ interface AnalysisRow {
 const OUTCOME_META: Record<Outcome, { label: string; color: string; bg: string }> = {
   success: { label: "Accurate",  color: "var(--signal)",       bg: "var(--raised)"   },
   partial: { label: "Partial",   color: "var(--text-dim)",   bg: "var(--surface)"  },
-  miss:    { label: "Missed",    color: "var(--accent)",     bg: "var(--surface)"  },
+  miss:    { label: "Missed",    color: "var(--accent-text)",     bg: "var(--surface)"  },
 };
 
 export default function HistoryPage() {
@@ -82,7 +82,7 @@ export default function HistoryPage() {
     setJustSaved(id);
     setTimeout(() => setJustSaved(null), 2500);
     const labels = { success: "Accurate", partial: "Partial", miss: "Missed" };
-    const colors = { success: "var(--signal)", partial: "var(--text-dim)", miss: "var(--accent)" };
+    const colors = { success: "var(--signal)", partial: "var(--text-dim)", miss: "var(--accent-text)" };
     showToast(
       note.trim() ? `Logged — Jane will learn from this` : `Outcome logged — ${labels[outcome]}`,
       colors[outcome]
@@ -102,17 +102,17 @@ export default function HistoryPage() {
           position: "fixed", bottom: "32px", left: "50%",
           transform: "translateX(-50%)",
           zIndex: 999,
-          padding: "14px 28px",
-          borderRadius: "10px",
+          padding: "var(--s-4) var(--s-5)",
+          borderRadius: "var(--r-card)",
           background: "var(--surface)",
           border: `1px solid ${toast.color}`,
           boxShadow: `0 0 32px rgba(0,0,0,0.4), 0 0 16px ${toast.color}33`,
-          display: "flex", alignItems: "center", gap: "10px",
+          display: "flex", alignItems: "center", gap: "var(--s-3)",
           animation: "fadeUp 0.3s ease",
           whiteSpace: "nowrap",
         }}>
           <Icon name="check" size={15} style={{ color: toast.color }} />
-          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "14px", fontWeight: 500, color: "var(--text-primary)" }}>
+          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", fontWeight: 500, color: "var(--text-primary)" }}>
             {toast.label}
           </span>
         </div>
@@ -126,11 +126,11 @@ export default function HistoryPage() {
           fontWeight: 600,
           color: "var(--text-primary)",
           lineHeight: 1.1,
-          marginBottom: "6px",
+          marginBottom: "var(--s-2)",
         }}>
           Analysis History
         </h1>
-        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", fontWeight: 300, color: "var(--text-muted)" }}>
+        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", fontWeight: 300, color: "var(--text-muted)" }}>
           Every profile Jane has built. Log outcomes to train your accuracy.
         </p>
       </div>
@@ -146,13 +146,13 @@ export default function HistoryPage() {
             <div style={{
               fontFamily: "var(--font-playfair), serif",
               fontSize: "28px", fontWeight: 400,
-              color: "var(--text-primary)", marginBottom: "4px",
+              color: "var(--text-primary)", marginBottom: "var(--s-1)",
             }}>
               {s.value}
             </div>
             <div style={{
               fontFamily: "var(--font-inter), sans-serif",
-              fontSize: "10px", fontWeight: 500,
+              fontSize: "var(--t-micro)", fontWeight: 500,
               letterSpacing: "0.1em", textTransform: "uppercase",
               color: "var(--text-ghost)",
             }}>
@@ -165,13 +165,13 @@ export default function HistoryPage() {
 
       {/* List */}
       {updateError && (
-        <div style={{ padding: "12px 16px", borderRadius: "8px", background: "var(--surface)", border: "1px solid var(--border-accent)", color: "var(--accent)", fontFamily: "var(--font-inter), sans-serif", fontSize: "13px" }}>
+        <div style={{ padding: "var(--s-3) var(--s-4)", borderRadius: "var(--r-input)", background: "var(--surface)", border: "1px solid var(--border-accent)", color: "var(--accent-text)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)" }}>
           {updateError}
         </div>
       )}
 
       {fetchError && (
-        <div style={{ padding: "12px 16px", borderRadius: "8px", background: "var(--surface)", border: "1px solid var(--border-accent)", color: "var(--accent)", fontFamily: "var(--font-inter), sans-serif", fontSize: "13px" }}>
+        <div style={{ padding: "var(--s-3) var(--s-4)", borderRadius: "var(--r-input)", background: "var(--surface)", border: "1px solid var(--border-accent)", color: "var(--accent-text)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)" }}>
           Supabase error: {fetchError}
         </div>
       )}
@@ -187,10 +187,10 @@ export default function HistoryPage() {
         </div>
       ) : rows.length === 0 ? (
         <div className="card p-10 text-center">
-          <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "20px", color: "var(--text-muted)", fontStyle: "italic" }}>
+          <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-title)", color: "var(--text-muted)", fontStyle: "italic" }}>
             No analyses yet.
           </p>
-          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "13px", color: "var(--text-ghost)", marginTop: "8px" }}>
+          <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", color: "var(--text-ghost)", marginTop: "var(--s-2)" }}>
             Go to Analyze and profile someone first.
           </p>
         </div>
@@ -233,28 +233,28 @@ export default function HistoryPage() {
                   <Link href={`/history/${row.id}`} style={{ textDecoration: "none" }}>
                   <p style={{
                     fontFamily: "var(--font-playfair), serif",
-                    fontSize: "19px", fontWeight: 500,
-                    color: "var(--text-primary)", marginBottom: "4px",
+                    fontSize: "var(--t-title)", fontWeight: 500,
+                    color: "var(--text-primary)", marginBottom: "var(--s-1)",
                     transition: "color 0.15s ease",
                   }}>
                     {row.archetype}
                   </p>
                   </Link>
                   <div className="flex flex-wrap items-center gap-3">
-                    <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "var(--text-ghost)" }}>
+                    <span style={{ fontFamily: "var(--font-inter)", fontSize: "var(--t-meta)", color: "var(--text-ghost)" }}>
                       {dateStr} · {timeStr}
                     </span>
-                    <span style={{ fontFamily: "var(--font-inter)", fontSize: "11px", color: "var(--text-muted)" }}>
+                    <span style={{ fontFamily: "var(--font-inter)", fontSize: "var(--t-meta)", color: "var(--text-muted)" }}>
                       {row.confidence}% confidence
                     </span>
                     <div className="flex gap-1 flex-wrap">
                       {frameworks.map((f) => (
                         <span key={f} style={{
-                          fontFamily: "var(--font-inter)", fontSize: "9px",
+                          fontFamily: "var(--font-inter)", fontSize: "var(--t-micro)",
                           fontWeight: 500, letterSpacing: "0.08em",
                           color: "var(--text-ghost)",
                           background: "var(--surface)", border: "1px solid var(--border)",
-                          borderRadius: "3px", padding: "2px 6px",
+                          borderRadius: "3px", padding: "var(--s-1) var(--s-2)",
                         }}>
                           {f}
                         </span>
@@ -268,13 +268,13 @@ export default function HistoryPage() {
                   onClick={() => deleteRow(row.id)}
                   title="Delete"
                   style={{
-                    width: "28px", height: "28px", borderRadius: "6px", flexShrink: 0,
+                    width: "28px", height: "28px", borderRadius: "var(--r-input)", flexShrink: 0,
                     background: "transparent", border: "1px solid var(--border)",
-                    color: "var(--text-ghost)", cursor: "pointer", fontSize: "12px",
+                    color: "var(--text-ghost)", cursor: "pointer", fontSize: "var(--t-meta)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     transition: "all 0.15s ease",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent-text)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-ghost)"; e.currentTarget.style.borderColor = "var(--border)"; }}
                 >
                   <Icon name="trash" size={14} />
@@ -283,10 +283,10 @@ export default function HistoryPage() {
                 {/* Outcome / log */}
                 {justSaved === row.id ? (
                   <span style={{
-                    fontFamily: "var(--font-inter)", fontSize: "11px", fontWeight: 600,
+                    fontFamily: "var(--font-inter)", fontSize: "var(--t-meta)", fontWeight: 600,
                     letterSpacing: "0.08em", color: "var(--signal)",
                     background: "var(--raised)", border: "1px solid var(--border)",
-                    borderRadius: "6px", padding: "4px 12px",
+                    borderRadius: "var(--r-input)", padding: "var(--s-1) var(--s-3)",
                     whiteSpace: "nowrap", flexShrink: 0,
                     animation: "fadeIn 0.2s ease",
                   }}>
@@ -297,10 +297,10 @@ export default function HistoryPage() {
                     onClick={() => setLogging(row.id)}
                     title="Click to change"
                     style={{
-                      fontFamily: "var(--font-inter)", fontSize: "11px", fontWeight: 500,
+                      fontFamily: "var(--font-inter)", fontSize: "var(--t-meta)", fontWeight: 500,
                       letterSpacing: "0.08em", color: outcomeMeta.color,
                       background: outcomeMeta.bg, border: "1px solid var(--border)",
-                      borderRadius: "6px", padding: "4px 12px",
+                      borderRadius: "var(--r-input)", padding: "var(--s-1) var(--s-3)",
                       whiteSpace: "nowrap", flexShrink: 0,
                       cursor: "pointer",
                     }}
@@ -316,14 +316,14 @@ export default function HistoryPage() {
                   <button
                     onClick={() => setLogging(row.id)}
                     style={{
-                      fontFamily: "var(--font-inter)", fontSize: "11px", fontWeight: 500,
+                      fontFamily: "var(--font-inter)", fontSize: "var(--t-meta)", fontWeight: 500,
                       letterSpacing: "0.06em", color: "var(--text-muted)",
                       background: "transparent", border: "1px solid var(--border)",
-                      borderRadius: "6px", padding: "4px 12px",
+                      borderRadius: "var(--r-input)", padding: "var(--s-1) var(--s-3)",
                       cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
                       transition: "all 0.2s ease",
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent-text)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border)"; }}
                   >
                     Log outcome
@@ -343,9 +343,9 @@ export default function HistoryPage() {
               {/* Previously saved correction */}
               {noting?.id !== row.id && row.outcome_note && (
                 <p style={{
-                  marginTop: "14px", paddingTop: "12px",
+                  marginTop: "var(--s-4)", paddingTop: "12px",
                   borderTop: "1px solid var(--border)",
-                  fontFamily: "var(--font-inter), sans-serif", fontSize: "12px",
+                  fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)",
                   fontWeight: 300, lineHeight: 1.6, color: "var(--text-muted)", fontStyle: "italic",
                 }}>
                   <span style={{ fontStyle: "normal", color: "var(--text-ghost)" }}>Your note: </span>
@@ -374,10 +374,10 @@ function NoteEditor({
   const meta = NOTE_PROMPT[outcome];
 
   return (
-    <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--border)", animation: "fadeIn 0.2s ease" }}>
-      <label style={{ display: "block", fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "8px" }}>
+    <div style={{ marginTop: "var(--s-4)", paddingTop: "14px", borderTop: "1px solid var(--border)", animation: "fadeIn 0.2s ease" }}>
+      <label style={{ display: "block", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-micro)", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "var(--s-2)" }}>
         {meta.label}
-        {outcome === "success" && <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: "11px", color: "var(--text-ghost)" }}> (optional)</span>}
+        {outcome === "success" && <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: "var(--t-meta)", color: "var(--text-ghost)" }}> (optional)</span>}
       </label>
       <textarea
         value={note}
@@ -388,26 +388,26 @@ function NoteEditor({
         style={{
           width: "100%", resize: "vertical",
           background: "var(--surface)", border: "1px solid var(--border)",
-          borderRadius: "8px", outline: "none", padding: "10px 12px",
+          borderRadius: "var(--r-input)", outline: "none", padding: "var(--s-3) var(--s-3)",
           fontFamily: "var(--font-inter), sans-serif",
-          fontSize: "13px", fontWeight: 300, lineHeight: 1.6,
+          fontSize: "var(--t-ui)", fontWeight: 300, lineHeight: 1.6,
           color: "var(--text-primary)", caretColor: "var(--accent)",
         }}
         onFocus={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; }}
         onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
       />
-      <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: "10px" }}>
+      <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: "var(--s-3)" }}>
         <button
           onClick={() => onSave(note)}
-          style={{ padding: "6px 18px", borderRadius: "6px", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", cursor: "pointer" }}
+          style={{ padding: "var(--s-2) var(--s-4)", borderRadius: "var(--r-input)", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 500, letterSpacing: "0.06em", cursor: "pointer" }}
         >Save</button>
         <button
           onClick={() => onSave("")}
-          style={{ padding: "6px 12px", borderRadius: "6px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", cursor: "pointer" }}
+          style={{ padding: "var(--s-2) var(--s-3)", borderRadius: "var(--r-input)", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", cursor: "pointer" }}
         >Skip</button>
         <button
           onClick={onCancel}
-          style={{ fontSize: "11px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "6px 4px" }}
+          style={{ fontSize: "var(--t-meta)", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "var(--s-2) var(--s-1)" }}
         >Cancel</button>
       </div>
     </div>
@@ -427,13 +427,13 @@ function OutcomePicker({ onPick, onCancel }: { onPick: (o: Outcome) => void; onC
           key={o.value}
           onClick={() => onPick(o.value)}
           style={{
-            fontFamily: "var(--font-inter)", fontSize: "10px", fontWeight: 500,
+            fontFamily: "var(--font-inter)", fontSize: "var(--t-micro)", fontWeight: 500,
             letterSpacing: "0.06em", color: "var(--text-muted)",
             background: "var(--surface)", border: "1px solid var(--border)",
-            borderRadius: "5px", padding: "4px 10px",
+            borderRadius: "var(--r-input)", padding: "var(--s-1) var(--s-3)",
             cursor: "pointer", transition: "all 0.15s ease",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent-text)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; e.currentTarget.style.borderColor = "var(--border)"; }}
         >
           {o.label}
@@ -441,9 +441,9 @@ function OutcomePicker({ onPick, onCancel }: { onPick: (o: Outcome) => void; onC
       ))}
       <button
         onClick={onCancel}
-        style={{ fontSize: "11px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "4px" }}
+        style={{ fontSize: "var(--t-meta)", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "var(--s-1)" }}
       >
-        ✕
+        <Icon name="close" size={13} />
       </button>
     </div>
   );

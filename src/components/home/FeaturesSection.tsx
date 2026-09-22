@@ -106,7 +106,7 @@ export default function FeaturesSection() {
             transition: "color 0.35s ease",
           }}>
             Everything you need to{" "}
-            <em style={{ fontStyle: "italic", color: "var(--accent)" }}>understand</em>{" "}
+            <em style={{ fontStyle: "italic", color: "var(--accent-text)" }}>understand</em>{" "}
             anyone.
           </h2>
         </motion.div>
@@ -138,7 +138,7 @@ export default function FeaturesSection() {
         {/* Prev / Next + dots row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", marginTop: "20px" }}>
           <button onClick={prev} aria-label="Previous" style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-muted)", boxShadow: "var(--shadow-card)", transition: "all 0.2s ease", flexShrink: 0 }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; e.currentTarget.style.color = "var(--accent)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; e.currentTarget.style.color = "var(--accent-text)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -152,19 +152,27 @@ export default function FeaturesSection() {
               onClick={() => go(i)}
               aria-label={`Go to card ${i + 1}`}
               style={{
-                width: i === active ? "24px" : "7px",
-                height: "7px",
-                borderRadius: "4px",
-                background: i === active ? "var(--accent)" : "var(--border)",
-                border: "none", cursor: "pointer", padding: 0,
-                transition: "all 0.3s ease",
+                // The dot stays 7px; the button around it clears 44px so it
+                // can actually be hit with a thumb.
+                width: i === active ? "38px" : "22px",
+                height: "44px",
+                background: "none", border: "none", cursor: "pointer",
+                padding: 0, display: "flex", alignItems: "center", justifyContent: "center",
               }}
-            />
+            >
+              <span style={{
+                display: "block",
+                width: i === active ? "24px" : "7px",
+                height: "7px", borderRadius: "var(--r-pill)",
+                background: i === active ? "var(--accent)" : "var(--border)",
+                transition: "all 0.3s ease",
+              }} />
+            </button>
           ))}
         </div>
 
           <button onClick={next} aria-label="Next" style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-muted)", boxShadow: "var(--shadow-card)", transition: "all 0.2s ease", flexShrink: 0 }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; e.currentTarget.style.color = "var(--accent)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; e.currentTarget.style.color = "var(--accent-text)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -197,7 +205,7 @@ function CarouselCard({
   accentRgbDark: string;
 }) {
   const isAccent = feature.color === "accent";
-  const accentColor = isAccent ? "var(--accent)" : "var(--signal)";
+  const accentColor = isAccent ? "var(--accent-text)" : "var(--signal)";
   const accentRgb = isAccent
     ? (isLight ? accentRgbLight : accentRgbDark)
     : (isLight ? "27,29,127" : "201,168,76");

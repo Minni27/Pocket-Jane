@@ -73,21 +73,21 @@ export default function ProfileDetailPage({ id }: { id: string }) {
   }, [id]);
 
   return (
-    <div className="flex flex-col flex-1 px-4 py-8 max-w-4xl mx-auto w-full" style={{ gap: "28px" }}>
+    <div className="flex flex-col flex-1 px-4 py-8 max-w-4xl mx-auto w-full" style={{ gap: "var(--s-5)" }}>
 
       {/* Back link */}
       <div>
         <Link
           href="/history"
           style={{
-            display: "inline-flex", alignItems: "center", gap: "6px",
+            display: "inline-flex", alignItems: "center", gap: "var(--s-2)",
             fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "12px", fontWeight: 500,
+            fontSize: "var(--t-meta)", fontWeight: 500,
             letterSpacing: "0.06em", textTransform: "uppercase",
             color: "var(--text-muted)", textDecoration: "none",
             transition: "color 0.2s ease",
           }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)"; }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--accent-text)"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--text-muted)"; }}
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -106,14 +106,14 @@ export default function ProfileDetailPage({ id }: { id: string }) {
             fontWeight: 600,
             color: "var(--text-primary)",
             lineHeight: 1.1,
-            marginBottom: "6px",
+            marginBottom: "var(--s-2)",
           }}>
             {profile.archetype}
           </h1>
           {meta && (
             <p style={{
               fontFamily: "var(--font-inter), sans-serif",
-              fontSize: "12px", fontWeight: 300,
+              fontSize: "var(--t-meta)", fontWeight: 300,
               color: "var(--text-ghost)",
             }}>
               {meta.inputType} · {meta.date}
@@ -140,10 +140,10 @@ export default function ProfileDetailPage({ id }: { id: string }) {
 
       {error && (
         <div style={{
-          padding: "14px 18px", borderRadius: "8px",
+          padding: "var(--s-4) var(--s-4)", borderRadius: "var(--r-input)",
           background: "var(--surface)", border: "1px solid var(--border-accent)",
-          color: "var(--accent)",
-          fontFamily: "var(--font-inter), sans-serif", fontSize: "13px",
+          color: "var(--accent-text)",
+          fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)",
         }}>
           {error}
         </div>

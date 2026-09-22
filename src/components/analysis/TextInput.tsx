@@ -41,10 +41,10 @@ export default function TextInput({ value, onChange }: Props) {
         className="flex items-center gap-2 px-4 py-3"
         style={{ borderBottom: "1px solid var(--border-soft)" }}
       >
-        <Icon name="pen" size={14} style={{ color: "var(--accent)" }} />
+        <Icon name="pen" size={14} style={{ color: "var(--accent-text)" }} />
         <span style={{
           fontFamily: "var(--font-inter), sans-serif",
-          fontSize: "11px", fontWeight: 500,
+          fontSize: "var(--t-meta)", fontWeight: 500,
           letterSpacing: "0.1em", textTransform: "uppercase",
           color: "var(--text-muted)",
         }}>
@@ -60,9 +60,9 @@ export default function TextInput({ value, onChange }: Props) {
         style={{
           flex: 1, resize: "none",
           background: "transparent", border: "none", outline: "none",
-          padding: "16px",
+          padding: "var(--s-4)",
           fontFamily: "var(--font-inter), sans-serif",
-          fontSize: "14px", fontWeight: 300, lineHeight: 1.7,
+          fontSize: "var(--t-ui)", fontWeight: 300, lineHeight: 1.7,
           color: "var(--text-primary)",
           caretColor: "var(--accent)",
         }}
@@ -75,14 +75,14 @@ export default function TextInput({ value, onChange }: Props) {
       >
         <span style={{
           fontFamily: "var(--font-playfair), serif",
-          fontSize: "12px", fontStyle: "italic",
+          fontSize: "var(--t-meta)", fontStyle: "italic",
           color: "var(--text-ghost)",
         }}>
           More detail = sharper profile
         </span>
         <span style={{
           fontFamily: "var(--font-inter), sans-serif",
-          fontSize: "11px",
+          fontSize: "var(--t-meta)",
           color: wordCount > 20 ? "var(--signal)" : "var(--text-ghost)",
           transition: "color 0.3s ease",
         }}>

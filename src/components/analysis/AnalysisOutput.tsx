@@ -59,7 +59,7 @@ function ProgressNarration() {
   }, [steps]);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "10px", minHeight: "20px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "var(--s-3)", minHeight: "20px" }}>
       <span style={{
         width: "6px", height: "6px", borderRadius: "50%",
         background: "var(--accent)", flexShrink: 0,
@@ -69,7 +69,7 @@ function ProgressNarration() {
         key={stage}
         style={{
           fontFamily: "var(--font-inter), sans-serif",
-          fontSize: "13px", fontWeight: 300, letterSpacing: "0.02em",
+          fontSize: "var(--t-ui)", fontWeight: 300, letterSpacing: "0.02em",
           color: "var(--text-muted)",
           animation: "fadeIn 0.5s ease",
         }}
@@ -119,9 +119,9 @@ function ProfileResult({ profile }: { profile: Profile }) {
 
       {/* Print header (hidden on screen) */}
       <div className="print-only" style={{ display: "none" }}>
-        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#888", marginBottom: "4px" }}>Pocket Jane — Psychological Profile</p>
-        <h1 style={{ fontFamily: "var(--font-playfair), serif", fontSize: "28px", fontWeight: 700, marginBottom: "2px" }}>{profile.archetype}</h1>
-        <p style={{ fontSize: "12px", color: "#666" }}>{profile.summary}</p>
+        <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", letterSpacing: "0.18em", textTransform: "uppercase", color: "#888", marginBottom: "var(--s-1)" }}>Pocket Jane — Psychological Profile</p>
+        <h1 style={{ fontFamily: "var(--font-playfair), serif", fontSize: "28px", fontWeight: 700, marginBottom: "var(--s-1)" }}>{profile.archetype}</h1>
+        <p style={{ fontSize: "var(--t-meta)", color: "#666" }}>{profile.summary}</p>
         <hr style={{ margin: "16px 0", borderColor: "#ddd" }} />
       </div>
 
@@ -251,7 +251,7 @@ function MethodologyCard({ step, index, defaultOpen }: { step: Profile["methodol
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
             fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)",
-            fontWeight: 500, color: "var(--text-primary)", marginBottom: "2px",
+            fontWeight: 500, color: "var(--text-primary)", marginBottom: "var(--s-1)",
           }}>
             {step.framework}
           </div>
@@ -303,7 +303,7 @@ function MethodologyCard({ step, index, defaultOpen }: { step: Profile["methodol
 const OUTCOME_OPTIONS: { value: Outcome; label: string; color: string }[] = [
   { value: "success", label: "Accurate", color: "var(--signal)"     },
   { value: "partial", label: "Partial",  color: "var(--text-dim)" },
-  { value: "miss",    label: "Missed",   color: "var(--accent)"   },
+  { value: "miss",    label: "Missed",   color: "var(--accent-text)"   },
 ];
 
 const NOTE_PROMPT: Record<Outcome, { label: string; placeholder: string }> = {
@@ -355,48 +355,48 @@ function OutcomeLogger({ id }: { id: string | null }) {
       {toast && (
         <div className="no-print" style={{
           position: "fixed", bottom: "32px", left: "50%", transform: "translateX(-50%)",
-          zIndex: 999, padding: "14px 28px", borderRadius: "10px",
+          zIndex: 999, padding: "var(--s-4) var(--s-5)", borderRadius: "var(--r-card)",
           background: "var(--surface)", border: `1px solid ${savedMeta?.color ?? "var(--accent)"}`,
           boxShadow: "0 0 32px rgba(0,0,0,0.4)",
-          display: "flex", alignItems: "center", gap: "10px",
+          display: "flex", alignItems: "center", gap: "var(--s-3)",
           animation: "fadeUp 0.3s ease", whiteSpace: "nowrap",
         }}>
-          <span style={{ fontSize: "16px", color: savedMeta?.color ?? "var(--accent)" }}>✓</span>
-          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "14px", fontWeight: 500, color: "var(--text-primary)" }}>{toast}</span>
+          <Icon name="check" size={15} style={{ color: savedMeta?.color ?? "var(--accent-text)" }} />
+          <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-ui)", fontWeight: 500, color: "var(--text-primary)" }}>{toast}</span>
         </div>
       )}
 
       <div className="card no-print p-5 mt-2" style={{ borderColor: "var(--border-soft)" }}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "18px", color: "var(--text-primary)", marginBottom: "4px" }}>
+            <p style={{ fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-title)", color: "var(--text-primary)", marginBottom: "var(--s-1)" }}>
               How did the interaction go?
             </p>
-            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 300, color: "var(--text-muted)" }}>
+            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 300, color: "var(--text-muted)" }}>
               Log the outcome. Jane learns from the gap between prediction and reality.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
             {savedMeta ? (
-              <span onClick={() => { setSaved(null); setPicking(true); }} title="Click to change" style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", color: savedMeta.color, background: "var(--raised)", border: `1px solid ${savedMeta.color}55`, borderRadius: "8px", padding: "8px 18px", cursor: "pointer", whiteSpace: "nowrap" }}>
-                ✓ {savedMeta.label}
+              <span onClick={() => { setSaved(null); setPicking(true); }} title="Click to change" style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 600, letterSpacing: "0.08em", color: savedMeta.color, background: "var(--raised)", border: `1px solid ${savedMeta.color}55`, borderRadius: "var(--r-input)", padding: "var(--s-2) var(--s-4)", cursor: "pointer", whiteSpace: "nowrap" }}>
+                <Icon name="check" size={13} style={{ marginRight: "5px", verticalAlign: "-2px" }} />{savedMeta.label}
               </span>
             ) : noting ? (
-              <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", color: OUTCOME_OPTIONS.find((o) => o.value === noting)!.color, whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 600, letterSpacing: "0.08em", color: OUTCOME_OPTIONS.find((o) => o.value === noting)!.color, whiteSpace: "nowrap" }}>
                 {OUTCOME_OPTIONS.find((o) => o.value === noting)!.label}
               </span>
             ) : picking ? (
               <>
                 {OUTCOME_OPTIONS.map((o) => (
-                  <button key={o.value} onClick={() => pick(o.value)} disabled={saving} style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.06em", color: o.color, background: "var(--surface)", border: `1px solid ${o.color}55`, borderRadius: "7px", padding: "8px 14px", cursor: "pointer", transition: "all 0.15s ease", whiteSpace: "nowrap" }}
+                  <button key={o.value} onClick={() => pick(o.value)} disabled={saving} style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 500, letterSpacing: "0.06em", color: o.color, background: "var(--surface)", border: `1px solid ${o.color}55`, borderRadius: "var(--r-input)", padding: "var(--s-2) var(--s-4)", cursor: "pointer", transition: "all 0.15s ease", whiteSpace: "nowrap" }}
                     onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "var(--surface)"; }}
                   >{o.label}</button>
                 ))}
-                <button onClick={() => setPicking(false)} style={{ fontSize: "12px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "8px 4px" }}>✕</button>
+                <button onClick={() => setPicking(false)} style={{ fontSize: "var(--t-meta)", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "var(--s-2) var(--s-1)" }} aria-label="Cancel"><Icon name="close" size={13} /></button>
               </>
             ) : (
-              <button onClick={() => setPicking(true)} style={{ padding: "10px 24px", borderRadius: "8px", background: "transparent", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s ease" }}
+              <button onClick={() => setPicking(true)} style={{ padding: "var(--s-3) var(--s-5)", borderRadius: "var(--r-input)", background: "transparent", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised)"; e.currentTarget.style.borderColor = "var(--border-accent)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "var(--border)"; }}
               >Log Outcome →</button>
@@ -406,10 +406,10 @@ function OutcomeLogger({ id }: { id: string | null }) {
 
         {/* Correction step — this text is what feeds back into future reads */}
         {noting && (
-          <div style={{ marginTop: "18px", paddingTop: "18px", borderTop: "1px solid var(--border)", animation: "fadeIn 0.2s ease" }}>
-            <label style={{ display: "block", fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "8px" }}>
+          <div style={{ marginTop: "var(--s-4)", paddingTop: "18px", borderTop: "1px solid var(--border)", animation: "fadeIn 0.2s ease" }}>
+            <label style={{ display: "block", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "var(--s-2)" }}>
               {NOTE_PROMPT[noting].label}
-              {noting === "success" && <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: "11px", color: "var(--text-ghost)" }}> (optional)</span>}
+              {noting === "success" && <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: "var(--t-meta)", color: "var(--text-ghost)" }}> (optional)</span>}
             </label>
             <textarea
               value={note}
@@ -420,36 +420,36 @@ function OutcomeLogger({ id }: { id: string | null }) {
               style={{
                 width: "100%", resize: "vertical",
                 background: "var(--surface)", border: "1px solid var(--border)",
-                borderRadius: "8px", outline: "none", padding: "10px 12px",
+                borderRadius: "var(--r-input)", outline: "none", padding: "var(--s-3) var(--s-3)",
                 fontFamily: "var(--font-inter), sans-serif",
-                fontSize: "13px", fontWeight: 300, lineHeight: 1.65,
+                fontSize: "var(--t-ui)", fontWeight: 300, lineHeight: 1.65,
                 color: "var(--text-primary)", caretColor: "var(--accent)",
                 transition: "border-color 0.2s ease",
               }}
               onFocus={(e) => { e.currentTarget.style.borderColor = "var(--border-accent)"; }}
               onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
             />
-            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "11px", fontWeight: 300, color: "var(--text-ghost)", margin: "8px 0 12px" }}>
+            <p style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 300, color: "var(--text-ghost)", margin: "8px 0 12px" }}>
               Be specific about what was wrong — this gets fed into future readings as calibration.
             </p>
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => log(noting, note)}
                 disabled={saving}
-                style={{ padding: "8px 20px", borderRadius: "7px", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 500, letterSpacing: "0.06em", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.5 : 1, transition: "all 0.2s ease" }}
+                style={{ padding: "var(--s-2) var(--s-5)", borderRadius: "var(--r-input)", background: "var(--raised)", border: "1px solid var(--border)", color: "var(--signal)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 500, letterSpacing: "0.06em", cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.5 : 1, transition: "all 0.2s ease" }}
               >
                 {saving ? "Saving…" : "Save"}
               </button>
               <button
                 onClick={() => log(noting, "")}
                 disabled={saving}
-                style={{ padding: "8px 14px", borderRadius: "7px", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "12px", fontWeight: 400, cursor: "pointer" }}
+                style={{ padding: "var(--s-2) var(--s-4)", borderRadius: "var(--r-input)", background: "transparent", border: "1px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-meta)", fontWeight: 400, cursor: "pointer" }}
               >
                 Skip
               </button>
               <button
                 onClick={() => { setNoting(null); setPicking(true); }}
-                style={{ fontSize: "12px", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "8px 4px" }}
+                style={{ fontSize: "var(--t-meta)", color: "var(--text-ghost)", background: "none", border: "none", cursor: "pointer", padding: "var(--s-2) var(--s-1)" }}
               >
                 Back
               </button>
@@ -463,14 +463,14 @@ function OutcomeLogger({ id }: { id: string | null }) {
 
 /* ─── Confidence meter ──────────────────────────────────────── */
 function ConfidenceMeter({ value }: { value: number }) {
-  const color = value >= 75 ? "var(--signal)" : value >= 55 ? "var(--text-dim)" : "var(--accent)";
+  const color = value >= 75 ? "var(--signal)" : value >= 55 ? "var(--text-dim)" : "var(--accent-text)";
   return (
     <div>
       <div className="flex justify-between items-center mb-1.5">
-        <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "10px", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+        <span style={{ fontFamily: "var(--font-inter), sans-serif", fontSize: "var(--t-micro)", fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)" }}>
           Confidence
         </span>
-        <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: "18px", fontWeight: 600, color }}>
+        <span style={{ fontFamily: "var(--font-playfair), serif", fontSize: "var(--t-title)", fontWeight: 600, color }}>
           {value}%
         </span>
       </div>

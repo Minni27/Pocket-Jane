@@ -15,7 +15,7 @@ const variants: Record<Variant, React.CSSProperties> = {
   primary:   { background: "var(--accent)", color: "#fff", border: "1px solid transparent" },
   secondary: { background: "transparent", color: "var(--text-dim)", border: "1px solid var(--border)" },
   ghost:     { background: "transparent", color: "var(--text-muted)", border: "1px solid transparent" },
-  danger:    { background: "transparent", color: "var(--accent)", border: "1px solid var(--border-accent)" },
+  danger:    { background: "transparent", color: "var(--accent-text)", border: "1px solid var(--border-accent)" },
 };
 
 export function Button({

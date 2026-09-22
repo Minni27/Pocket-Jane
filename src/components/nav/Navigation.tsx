@@ -101,7 +101,7 @@ export default function Navigation() {
     }}>
 
       {/* Logo */}
-      <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
+      <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px", minHeight: "44px", paddingRight: "var(--s-2)" }}>
         <div style={{
           width: "28px", height: "28px", borderRadius: "50%",
           background: logoBg, boxShadow: logoGlow,
@@ -171,7 +171,7 @@ export default function Navigation() {
               cursor: "pointer", transition: "all 0.25s ease", flexShrink: 0,
               color: "var(--text-muted)",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent-text)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-muted)"; }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -207,7 +207,7 @@ export default function Navigation() {
                 flex: 1, display: "flex", flexDirection: "column",
                 alignItems: "center", justifyContent: "center", gap: "3px",
                 padding: "9px 0 7px", textDecoration: "none",
-                color: active ? "var(--accent)" : "var(--text-muted)",
+                color: active ? "var(--accent-text)" : "var(--text-muted)",
                 transition: "color 0.2s ease",
               }}
             >
