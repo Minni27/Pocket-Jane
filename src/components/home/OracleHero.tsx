@@ -17,27 +17,19 @@ export default function OracleHero() {
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start","end end"] });
   const smooth = useSpring(scrollYProgress, { stiffness: 55, damping: 22 });
 
-  // Everything is legible on arrival; scroll deepens the scene rather than
-  // revealing it. The pin is long, so each layer moves at its own rate —
-  // a static pin for four screens reads as a stuck page.
-  const logoOpacity = useTransform(smooth, [0, 0.72, 0.94], [1, 1, 0]);
-  const logoY       = useTransform(smooth, [0, 1], [0, -70]);
-
-  const bloomScale  = useTransform(smooth, [0, 0.55], [1.0, 2.6]);
-  const bloomOp     = useTransform(smooth, [0, 0.30, 0.70, 0.95], [0.55, 0.8, 0.5, 0]);
-
-  const readOp      = useTransform(smooth, [0, 0.74, 0.95], [1, 1, 0]);
-  const readY       = useTransform(smooth, [0, 1], [0, -110]);
-
-  const line2Op     = useTransform(smooth, [0, 0.78, 0.97], [1, 1, 0]);
-  const line2X      = useTransform(smooth, [0, 0.55], [0, -18]);
-
-  const subOp       = useTransform(smooth, [0, 0.62, 0.86], [1, 1, 0]);
-  const subY        = useTransform(smooth, [0, 1], [0, -52]);
-
-  const eyeOp       = useTransform(smooth, [0, 0.80, 1], [1, 1, 0]);
-  const hintOp      = useTransform(smooth, [0, 0.05, 0.14], [1, 1, 0]);
-  const gridOp      = useTransform(smooth, [0, 0.20, 0.76, 1], [0.35, 0.8, 0.8, 0]);
+  const logoOpacity = useTransform(smooth, [0, 0.10, 0.18], [0, 0, 1]);
+  const logoY       = useTransform(smooth, [0, 0.18], [36, 0]);
+  const bloomScale  = useTransform(smooth, [0, 0.45], [0.1, 2.4]);
+  const bloomOp     = useTransform(smooth, [0, 0.10, 0.65, 0.95], [0, 0.75, 0.55, 0]);
+  const readClip    = useTransform(smooth, [0.28, 0.56], ["inset(0 100% 0 0)","inset(0 0% 0 0)"]);
+  const readOp      = useTransform(smooth, [0.26, 0.30], [0, 1]);
+  const line2Op     = useTransform(smooth, [0.52, 0.70], [0, 1]);
+  const line2X      = useTransform(smooth, [0.52, 0.70], [28, 0]);
+  const subOp       = useTransform(smooth, [0.70, 0.86], [0, 1]);
+  const subY        = useTransform(smooth, [0.70, 0.86], [22, 0]);
+  const eyeOp       = useTransform(smooth, [0, 0.05, 0.84, 1], [0, 1, 1, 0]);
+  const hintOp      = useTransform(smooth, [0, 0.07, 0.18], [1, 1, 0]);
+  const gridOp      = useTransform(smooth, [0, 0.14, 0.72, 1], [0, 0.8, 0.8, 0]);
 
   // Jane (light) = blue bloom; Red John (dark) = red bloom
   const bloomBg = isLight
@@ -65,7 +57,7 @@ export default function OracleHero() {
   const ctaColor = isLight ? "#e8f0ff" : "#f0ead8";
 
   return (
-    <div ref={containerRef} style={{ height: "480vh", position: "relative" }}>
+    <div ref={containerRef} style={{ height: "560vh", position: "relative" }}>
       <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
 
         {/* Background */}
@@ -109,13 +101,13 @@ export default function OracleHero() {
           </motion.div>
 
           {/* Line 1 — wipe */}
-          <div style={{ marginBottom: "6px" }}>
+          <div style={{ overflow: "hidden", marginBottom: "6px" }}>
             <motion.h1 style={{
               fontFamily: "var(--font-playfair),Georgia,serif",
               fontSize: "clamp(1.7rem,8.5vw,8rem)", fontWeight: 700,
               lineHeight: 0.95, letterSpacing: "-0.03em",
               color: line1Color, margin: 0, whiteSpace: "nowrap",
-              opacity: readOp, y: readY,
+              clipPath: readClip, WebkitClipPath: readClip, opacity: readOp,
               transition: "color 0.4s ease",
             }}>
               You&apos;ve Already
