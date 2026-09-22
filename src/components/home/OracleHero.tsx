@@ -94,7 +94,7 @@ export default function OracleHero() {
           <motion.div style={{ opacity: logoOpacity, y: logoY, marginBottom: "52px", textAlign: "center" }}>
             <span style={{
               fontFamily: "var(--font-inter),sans-serif",
-              fontSize: "11px", fontWeight: 500,
+              fontSize: "var(--t-meta)", fontWeight: 500,
               letterSpacing: "0.28em", textTransform: "uppercase",
               color: isLight ? "rgba(45,91,227,0.55)" : "rgba(168,131,42,0.6)",
             }}>Pocket Jane</span>
@@ -136,7 +136,7 @@ export default function OracleHero() {
           }}>
             <p style={{
               fontFamily: "var(--font-inter),sans-serif",
-              fontSize: "15px", fontWeight: 300, lineHeight: 1.75,
+              fontSize: "var(--t-body)", fontWeight: 300, lineHeight: 1.75,
               color: "var(--text-dim)", margin: 0, transition: "color 0.4s ease",
             }}>
               Real-time psychological profiling grounded in the literature that
@@ -149,7 +149,7 @@ export default function OracleHero() {
                 background: ctaBg, border: "1px solid var(--border-accent)",
                 boxShadow: ctaGlow, color: ctaColor,
                 fontFamily: "var(--font-playfair),serif",
-                fontSize: "18px", fontWeight: 500, textDecoration: "none",
+                fontSize: "var(--t-title)", fontWeight: 500, textDecoration: "none",
               }}>
                 Begin Analysis →
               </Link>
@@ -159,7 +159,7 @@ export default function OracleHero() {
                 background: "transparent", border: "1px solid var(--border)",
                 color: "var(--text-muted)",
                 fontFamily: "var(--font-inter),sans-serif",
-                fontSize: "14px", fontWeight: 400, textDecoration: "none",
+                fontSize: "var(--t-ui)", fontWeight: 400, textDecoration: "none",
               }}>
                 Upload Books
               </Link>
@@ -175,7 +175,7 @@ export default function OracleHero() {
         }}>
           <span style={{
             fontFamily: "var(--font-inter),sans-serif",
-            fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase",
+            fontSize: "var(--t-micro)", letterSpacing: "0.22em", textTransform: "uppercase",
             color: "var(--text-ghost)",
           }}>scroll</span>
           <motion.div animate={{ y: [0,7,0] }} transition={{ duration: 1.9, repeat: Infinity, ease: "easeInOut" }}>

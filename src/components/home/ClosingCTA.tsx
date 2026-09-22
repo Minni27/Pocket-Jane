@@ -71,7 +71,7 @@ export default function ClosingCTA() {
 
         <div style={{
           fontFamily: "var(--font-inter), sans-serif",
-          fontSize: "11px", fontWeight: 500,
+          fontSize: "var(--t-meta)", fontWeight: 500,
           letterSpacing: "0.14em", textTransform: "uppercase",
           color: "var(--text-muted)",
           marginTop: "18px",
@@ -119,7 +119,7 @@ export default function ClosingCTA() {
           }}
         >
           Begin
-          <span style={{ fontSize: "18px", opacity: 0.7 }}>→</span>
+          <span style={{ fontSize: "var(--t-title)", opacity: 0.7 }}>→</span>
         </Link>
       </motion.div>
     </section>

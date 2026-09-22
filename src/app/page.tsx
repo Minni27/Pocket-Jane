@@ -2,6 +2,7 @@
 
 import OracleHero from "@/components/home/OracleHero";
 import FeaturesSection from "@/components/home/FeaturesSection";
+import SignatureSection from "@/components/home/SignatureSection";
 import ClosingCTA from "@/components/home/ClosingCTA";
 
 export default function Home() {
@@ -9,6 +10,7 @@ export default function Home() {
     <div style={{ background: "var(--bg)" }}>
       <OracleHero />
       <FeaturesSection />
+      <SignatureSection />
       <ClosingCTA />
     </div>
   );

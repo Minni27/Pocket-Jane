@@ -31,9 +31,11 @@ export default function Mark({
       width={size} height={size} viewBox={`0 0 ${size} ${size}`}
       aria-hidden="true" focusable="false"
       style={{
-        // The seeded hue rides on this subtree only — every --mark below
-        // resolves against it, and nothing outside inherits the shift.
-        ["--mark-shift" as string]: `${s.shift}`,
+        // --mark must be declared here, not inherited. A custom property is
+        // computed where it is declared, so the :root definition resolves
+        // against --mark-shift: 0 and setting the shift on a descendant
+        // changes nothing. Declaring it locally is what makes the hue move.
+        ["--mark" as string]: `hsl(from var(--accent) calc(h + ${s.shift}) s l)`,
         display: "block", overflow: "visible",
       }}
     >

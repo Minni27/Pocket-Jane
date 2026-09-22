@@ -246,7 +246,7 @@ function CarouselCard({
         }}>
           <span style={{
             fontFamily: "var(--font-inter), sans-serif",
-            fontSize: "9px", fontWeight: 700,
+            fontSize: "var(--t-micro)", fontWeight: 700,
             letterSpacing: "0.14em", textTransform: "uppercase",
             color: accentColor,
           }}>
@@ -275,7 +275,7 @@ function CarouselCard({
 
         <p style={{
           fontFamily: "var(--font-inter), sans-serif",
-          fontSize: "15px", fontWeight: 300, lineHeight: 1.72,
+          fontSize: "var(--t-body)", fontWeight: 300, lineHeight: 1.72,
           color: "var(--text-muted)",
           margin: 0, maxWidth: "480px",
           transition: "color 0.35s ease",
