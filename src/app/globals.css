@@ -249,11 +249,13 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #b91c1c; }
   }
 }
 
-/* No layout should be able to scroll the page sideways. Decorative
-   blobs are wider than the viewport by design and are clipped by
-   their parents; this is the backstop for anything that is not. */
+/* No layout should scroll the page sideways. This must be `clip`, not
+   `hidden`: any overflow value other than visible turns the element into a
+   scroll container, which silently disables position:sticky in every
+   descendant — it took the hero's pinned scroll sequence with it. `clip`
+   contains the overflow without creating that scroll container. */
 html, body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
 }
 
